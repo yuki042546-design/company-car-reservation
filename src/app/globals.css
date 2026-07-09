@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: #f5f6f8;
+  color: #1c2027;
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", ui-sans-serif,
+    system-ui, sans-serif;
+}
+
+/* スマホでタップしやすいよう、フォーム部品の最小サイズを確保 */
+input,
+select,
+textarea,
+button {
+  font-size: 16px; /* iOS でズームされないように 16px 以上にする */
+}
