@@ -3,6 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapReservationRow, type ReservationRow } from "@/lib/mappers";
 import { validateReservationInput } from "@/lib/reservationRules";
 import { hasOverlappingReservation, isExclusionViolation } from "@/lib/overlapCheck";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import { getLocale } from "@/lib/i18n/getLocale";
 import type { ReservationInput } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -11,6 +13,7 @@ export const runtime = "nodejs";
 // from/to を省略すると全予約を返す（全予約一覧用）。
 // 指定すると、その範囲と重なる予約のみ返す（今日/今週の予約用）。
 export async function GET(request: NextRequest) {
+  const dict = getDictionary(getLocale());
   const supabase = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
@@ -24,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query;
   if (error) {
-    return NextResponse.json({ errors: ["予約の取得に失敗しました。"] }, { status: 500 });
+    return NextResponse.json({ errors: [dict.apiErrors.fetchReservationsFailed] }, { status: 500 });
   }
 
   const reservations = (data as ReservationRow[]).map(mapReservationRow);
@@ -33,16 +36,17 @@ export async function GET(request: NextRequest) {
 
 // POST /api/reservations - 新規予約登録
 export async function POST(request: NextRequest) {
+  const dict = getDictionary(getLocale());
   const supabase = getSupabaseAdmin();
 
   let body: ReservationInput;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ errors: ["リクエストの形式が正しくありません。"] }, { status: 400 });
+    return NextResponse.json({ errors: [dict.apiErrors.invalidRequestBody] }, { status: 400 });
   }
 
-  const validation = validateReservationInput(body);
+  const validation = validateReservationInput(body, dict);
   if (!validation.valid) {
     return NextResponse.json({ errors: validation.errors }, { status: 400 });
   }
@@ -53,10 +57,7 @@ export async function POST(request: NextRequest) {
   try {
     const overlapping = await hasOverlappingReservation(supabase, start, end);
     if (overlapping) {
-      return NextResponse.json(
-        { errors: ["この時間帯はすでに予約が入っています。別の時間を選択してください。"] },
-        { status: 409 }
-      );
+      return NextResponse.json({ errors: [dict.validation.overlap] }, { status: 409 });
     }
 
     const { data, error } = await supabase
@@ -74,10 +75,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       if (isExclusionViolation(error)) {
-        return NextResponse.json(
-          { errors: ["この時間帯はすでに予約が入っています。別の時間を選択してください。"] },
-          { status: 409 }
-        );
+        return NextResponse.json({ errors: [dict.validation.overlap] }, { status: 409 });
       }
       throw error;
     }
@@ -85,6 +83,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ reservation: mapReservationRow(data as ReservationRow) }, { status: 201 });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ errors: ["予約の登録に失敗しました。"] }, { status: 500 });
+    return NextResponse.json({ errors: [dict.apiErrors.createFailed] }, { status: 500 });
   }
 }

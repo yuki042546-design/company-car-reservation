@@ -3,6 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapEmployeeRow, type EmployeeRow } from "@/lib/mappers";
 import { isAdminRequest } from "@/lib/requireAdmin";
 import { validateNewEmployeeInput } from "@/lib/employeeRules";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import { getLocale } from "@/lib/i18n/getLocale";
 
 export const runtime = "nodejs";
 
@@ -10,6 +12,7 @@ export const runtime = "nodejs";
 // デフォルトでは有効な社員のみ返す（予約フォームのプルダウン用）。
 // all=1 を付けると管理者画面用に無効化された社員も含めて全件返す。
 export async function GET(request: NextRequest) {
+  const dict = getDictionary(getLocale());
   const supabase = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
   const includeInactive = searchParams.get("all") === "1";
@@ -21,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query;
   if (error) {
-    return NextResponse.json({ errors: ["社員一覧の取得に失敗しました。"] }, { status: 500 });
+    return NextResponse.json({ errors: [dict.apiErrors.fetchEmployeesFailed] }, { status: 500 });
   }
 
   const employees = (data as EmployeeRow[]).map(mapEmployeeRow);
@@ -30,18 +33,20 @@ export async function GET(request: NextRequest) {
 
 // POST /api/employees - 社員追加（管理者のみ）
 export async function POST(request: NextRequest) {
+  const dict = getDictionary(getLocale());
+
   if (!isAdminRequest()) {
-    return NextResponse.json({ errors: ["管理者のみ操作できます。"] }, { status: 401 });
+    return NextResponse.json({ errors: [dict.apiErrors.adminOnly] }, { status: 401 });
   }
 
   let body: { name?: string; department?: string | null; age?: number | null };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ errors: ["リクエストの形式が正しくありません。"] }, { status: 400 });
+    return NextResponse.json({ errors: [dict.apiErrors.invalidRequestBody] }, { status: 400 });
   }
 
-  const validation = validateNewEmployeeInput(body);
+  const validation = validateNewEmployeeInput(body, dict);
   if (!validation.valid) {
     return NextResponse.json({ errors: validation.errors }, { status: 400 });
   }
@@ -58,7 +63,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ errors: ["社員の追加に失敗しました。"] }, { status: 500 });
+    return NextResponse.json({ errors: [dict.apiErrors.addEmployeeFailed] }, { status: 500 });
   }
 
   return NextResponse.json({ employee: mapEmployeeRow(data as EmployeeRow) }, { status: 201 });

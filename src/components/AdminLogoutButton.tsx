@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useI18n } from "./LocaleProvider";
 
 export function AdminLogoutButton() {
+  const { dict } = useI18n();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +25,7 @@ export function AdminLogoutButton() {
       disabled={loading}
       className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
     >
-      ログアウト
+      {dict.admin.logoutButton}
     </button>
   );
 }

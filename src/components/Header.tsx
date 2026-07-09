@@ -1,9 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useI18n } from "./LocaleProvider";
 
 export function Header() {
+  const { dict } = useI18n();
+
   return (
     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+      <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="flex items-center gap-2.5 text-[15px] font-bold tracking-tight text-gray-900">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
             <svg
@@ -21,16 +27,19 @@ export function Header() {
               <path d="M15.5 8.1 18 5.6M17.7 5.4l2 2" />
             </svg>
           </span>
-          社用車予約
+          <span className="whitespace-nowrap">{dict.nav.appName}</span>
         </Link>
-        <nav className="flex gap-5 text-[13px] font-semibold">
-          <Link href="/reservations" className="text-gray-500 hover:text-brand-600">
-            予約一覧
-          </Link>
-          <Link href="/admin" className="text-gray-500 hover:text-brand-600">
-            管理者
-          </Link>
-        </nav>
+        <div className="flex items-center gap-4">
+          <nav className="flex gap-5 text-[13px] font-semibold">
+            <Link href="/reservations" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
+              {dict.nav.reservations}
+            </Link>
+            <Link href="/admin" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
+              {dict.nav.admin}
+            </Link>
+          </nav>
+          <LanguageSwitcher />
+        </div>
       </div>
     </header>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Reservation } from "@/lib/types";
+import { useI18n } from "./LocaleProvider";
 import { ReservationCard } from "./ReservationCard";
 import { SelfDeleteButton } from "./SelfDeleteButton";
 import { TodayGanttChart } from "./TodayGanttChart";
@@ -15,6 +16,7 @@ interface TodayViewProps {
 type ViewMode = "list" | "gantt";
 
 export function TodayView({ reservations, todayStartIso, nowIso }: TodayViewProps) {
+  const { dict } = useI18n();
   const [mode, setMode] = useState<ViewMode>("list");
 
   return (
@@ -28,7 +30,7 @@ export function TodayView({ reservations, todayStartIso, nowIso }: TodayViewProp
               : "rounded-md px-3 py-1.5 text-gray-500 hover:text-gray-700"
           }
         >
-          リスト
+          {dict.top.viewList}
         </button>
         <button
           onClick={() => setMode("gantt")}
@@ -38,14 +40,14 @@ export function TodayView({ reservations, todayStartIso, nowIso }: TodayViewProp
               : "rounded-md px-3 py-1.5 text-gray-500 hover:text-gray-700"
           }
         >
-          ガントチャート
+          {dict.top.viewGantt}
         </button>
       </div>
 
       {mode === "list" ? (
         reservations.length === 0 ? (
           <p className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-4 text-sm text-gray-400">
-            本日の予約はありません。
+            {dict.top.noneToday}
           </p>
         ) : (
           <div className="space-y-2">
@@ -53,13 +55,14 @@ export function TodayView({ reservations, todayStartIso, nowIso }: TodayViewProp
               <ReservationCard
                 key={r.id}
                 reservation={r}
+                dict={dict}
                 rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
               />
             ))}
           </div>
         )
       ) : (
-        <TodayGanttChart reservations={reservations} todayStartIso={todayStartIso} nowIso={nowIso} />
+        <TodayGanttChart reservations={reservations} todayStartIso={todayStartIso} nowIso={nowIso} dict={dict} />
       )}
     </div>
   );

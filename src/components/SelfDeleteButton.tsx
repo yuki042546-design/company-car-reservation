@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Employee } from "@/lib/types";
+import { useI18n } from "./LocaleProvider";
 
 interface SelfDeleteButtonProps {
   reservationId: string;
@@ -14,6 +15,7 @@ interface SelfDeleteButtonProps {
 // という自己申告ベースの簡易的なもの。実際の可否判定はサーバー側
 // （/api/reservations/[id] の DELETE）で employee_name と突き合わせて行う）。
 export function SelfDeleteButton({ reservationId, ownerName }: SelfDeleteButtonProps) {
+  const { dict } = useI18n();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [employees, setEmployees] = useState<Employee[] | null>(null);
@@ -40,7 +42,7 @@ export function SelfDeleteButton({ reservationId, ownerName }: SelfDeleteButtonP
       }
       setEmployees(list);
     } catch {
-      setError("社員一覧の取得に失敗しました。");
+      setError(dict.selfDelete.fetchEmployeesError);
     } finally {
       setLoadingEmployees(false);
     }
@@ -54,7 +56,7 @@ export function SelfDeleteButton({ reservationId, ownerName }: SelfDeleteButtonP
 
   async function handleConfirmDelete() {
     if (!requesterName) {
-      setError("あなたの名前を選択してください。");
+      setError(dict.selfDelete.needName);
       return;
     }
     setError(null);
@@ -67,14 +69,14 @@ export function SelfDeleteButton({ reservationId, ownerName }: SelfDeleteButtonP
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.errors?.[0] ?? "削除に失敗しました。");
+        setError(json.errors?.[0] ?? dict.selfDelete.genericError);
         return;
       }
       setOpen(false);
       setRequesterName("");
       router.refresh();
     } catch {
-      setError("通信エラーが発生しました。");
+      setError(dict.selfDelete.networkError);
     } finally {
       setSubmitting(false);
     }
@@ -86,12 +88,12 @@ export function SelfDeleteButton({ reservationId, ownerName }: SelfDeleteButtonP
         onClick={handleOpen}
         className="rounded-lg border border-danger-border bg-danger-soft px-3 py-1.5 text-sm text-danger hover:bg-danger-soft/70"
       >
-        削除
+        {dict.selfDelete.button}
       </button>
 
       {open && (
         <div className="absolute right-0 top-full z-20 mt-2 w-64 max-w-[80vw] rounded-xl border border-danger-border bg-danger-soft p-3 text-sm shadow-lg">
-          <p className="mb-2 font-medium text-gray-700">本人確認: あなたの名前を選択</p>
+          <p className="mb-2 font-medium text-gray-700">{dict.selfDelete.confirmTitle}</p>
           {error && <p className="mb-2 text-xs text-danger">{error}</p>}
           <select
             value={requesterName}
@@ -99,7 +101,7 @@ export function SelfDeleteButton({ reservationId, ownerName }: SelfDeleteButtonP
             disabled={loadingEmployees}
             className="mb-2 w-full rounded-lg border border-gray-300 px-2 py-2"
           >
-            <option value="">{loadingEmployees ? "読み込み中..." : "選択してください"}</option>
+            <option value="">{loadingEmployees ? dict.common.loading : dict.common.selectPlaceholder}</option>
             {employees?.map((emp) => (
               <option key={emp.id} value={emp.name}>
                 {emp.name}
@@ -112,17 +114,17 @@ export function SelfDeleteButton({ reservationId, ownerName }: SelfDeleteButtonP
               disabled={submitting || !requesterName}
               className="flex-1 rounded-lg bg-danger py-2 text-xs font-semibold text-white hover:bg-danger-hover disabled:opacity-50"
             >
-              {submitting ? "削除中..." : "削除する"}
+              {submitting ? dict.selfDelete.confirmButtonBusy : dict.selfDelete.confirmButton}
             </button>
             <button
               onClick={handleCancel}
               disabled={submitting}
               className="flex-1 rounded-lg border border-gray-300 bg-white py-2 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-50"
             >
-              キャンセル
+              {dict.selfDelete.cancel}
             </button>
           </div>
-          <p className="mt-2 text-xs text-gray-500">※ご本人以外の予約は削除できません（管理者にご依頼ください）。</p>
+          <p className="mt-2 text-xs text-gray-500">{dict.selfDelete.footnote}</p>
         </div>
       )}
     </div>

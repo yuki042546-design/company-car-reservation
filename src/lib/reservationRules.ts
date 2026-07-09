@@ -1,3 +1,4 @@
+import type { Dictionary } from "./i18n/dictionary";
 import type { ReservationInput } from "./types";
 
 export const SLOT_MINUTES = 30;
@@ -17,15 +18,22 @@ function isOnSlotBoundary(date: Date): boolean {
  * 予約内容の入力チェック（必須項目・30分単位・過去日時・使用時間の上限下限）。
  * サーバー（API ルート）とクライアント（フォーム）の両方から呼ばれる、
  * このアプリの「予約時間のルール」の唯一の実装。
+ * エラーメッセージは dict（言語ごとの辞書）から取得するため、
+ * 呼び出し側は現在の言語設定に応じた dict を渡す。
  */
-export function validateReservationInput(input: ReservationInput, now: Date = new Date()): ValidationResult {
+export function validateReservationInput(
+  input: ReservationInput,
+  dict: Dictionary,
+  now: Date = new Date()
+): ValidationResult {
   const errors: string[] = [];
+  const v = dict.validation;
 
-  if (!input.employeeName?.trim()) errors.push("使用者名を選択してください。");
-  if (!input.destination?.trim()) errors.push("行き先を入力してください。");
-  if (!input.purpose?.trim()) errors.push("用途を入力してください。");
-  if (!input.startTime) errors.push("開始日時を入力してください。");
-  if (!input.endTime) errors.push("終了日時を入力してください。");
+  if (!input.employeeName?.trim()) errors.push(v.employeeNameRequired);
+  if (!input.destination?.trim()) errors.push(v.destinationRequired);
+  if (!input.purpose?.trim()) errors.push(v.purposeRequired);
+  if (!input.startTime) errors.push(v.startTimeRequired);
+  if (!input.endTime) errors.push(v.endTimeRequired);
 
   if (errors.length > 0) {
     return { valid: false, errors };
@@ -35,29 +43,29 @@ export function validateReservationInput(input: ReservationInput, now: Date = ne
   const end = new Date(input.endTime);
 
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return { valid: false, errors: ["日時の形式が正しくありません。"] };
+    return { valid: false, errors: [v.invalidDateTime] };
   }
 
   if (!isOnSlotBoundary(start)) {
-    errors.push("開始日時は30分単位（00分または30分）で指定してください。");
+    errors.push(v.startNotOnSlot);
   }
   if (!isOnSlotBoundary(end)) {
-    errors.push("終了日時は30分単位（00分または30分）で指定してください。");
+    errors.push(v.endNotOnSlot);
   }
 
   if (start.getTime() < now.getTime()) {
-    errors.push("過去の日時は予約できません。");
+    errors.push(v.pastDateTime);
   }
 
   if (end.getTime() <= start.getTime()) {
-    errors.push("終了日時は開始日時より後にしてください。");
+    errors.push(v.endBeforeStart);
   } else {
     const durationMinutes = (end.getTime() - start.getTime()) / 60000;
     if (durationMinutes < MIN_DURATION_MINUTES) {
-      errors.push("使用時間は30分以上にしてください。");
+      errors.push(v.tooShort);
     }
     if (durationMinutes > MAX_DURATION_MINUTES) {
-      errors.push("使用時間は4時間以内にしてください。");
+      errors.push(v.tooLong);
     }
   }
 

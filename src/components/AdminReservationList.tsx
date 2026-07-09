@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Reservation } from "@/lib/types";
+import { useI18n } from "./LocaleProvider";
 import { ReservationCard } from "./ReservationCard";
 
 interface AdminReservationListProps {
@@ -10,31 +11,32 @@ interface AdminReservationListProps {
 }
 
 export function AdminReservationList({ reservations }: AdminReservationListProps) {
+  const { dict } = useI18n();
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete(id: string) {
-    if (!confirm("この予約を削除します。よろしいですか？")) return;
+    if (!confirm(dict.admin.confirmDelete)) return;
     setError(null);
     setDeletingId(id);
     try {
       const res = await fetch(`/api/reservations/${id}`, { method: "DELETE" });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.errors?.[0] ?? "削除に失敗しました。");
+        setError(json.errors?.[0] ?? dict.admin.deleteGenericError);
         return;
       }
       router.refresh();
     } catch {
-      setError("通信エラーが発生しました。");
+      setError(dict.admin.networkError);
     } finally {
       setDeletingId(null);
     }
   }
 
   if (reservations.length === 0) {
-    return <p className="text-sm text-gray-500">予約はまだありません。</p>;
+    return <p className="text-sm text-gray-500">{dict.admin.noReservations}</p>;
   }
 
   return (
@@ -44,6 +46,7 @@ export function AdminReservationList({ reservations }: AdminReservationListProps
         <ReservationCard
           key={r.id}
           reservation={r}
+          dict={dict}
           showEditLink
           rightSlot={
             <button
@@ -51,12 +54,12 @@ export function AdminReservationList({ reservations }: AdminReservationListProps
               disabled={deletingId === r.id}
               className="rounded-lg border border-danger-border bg-danger-soft px-3 py-1.5 text-sm text-danger hover:bg-danger-soft/70 disabled:opacity-50"
             >
-              {deletingId === r.id ? "削除中..." : "削除"}
+              {deletingId === r.id ? dict.common.deleting : dict.common.delete}
             </button>
           }
         />
       ))}
-      <p className="pt-2 text-right text-xs text-gray-400">表示件数: {reservations.length}件</p>
+      <p className="pt-2 text-right text-xs text-gray-400">{dict.admin.countLabel(reservations.length)}</p>
     </div>
   );
 }

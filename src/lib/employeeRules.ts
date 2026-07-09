@@ -1,3 +1,5 @@
+import type { Dictionary } from "./i18n/dictionary";
+
 export const MIN_AGE = 15;
 export const MAX_AGE = 100;
 export const MAX_DEPARTMENT_LENGTH = 100;
@@ -16,21 +18,21 @@ export function isValidDepartment(department: string): boolean {
 }
 
 /** 新規社員追加時のバリデーション（name は必須） */
-export function validateNewEmployeeInput(input: {
-  name?: string;
-  department?: string | null;
-  age?: number | null;
-}): ValidationResult {
+export function validateNewEmployeeInput(
+  input: { name?: string; department?: string | null; age?: number | null },
+  dict: Dictionary
+): ValidationResult {
   const errors: string[] = [];
+  const v = dict.employeeValidation;
 
   if (!input.name?.trim()) {
-    errors.push("社員名を入力してください。");
+    errors.push(v.nameRequired);
   }
   if (input.age !== undefined && input.age !== null && !isValidAge(input.age)) {
-    errors.push(`年齢は${MIN_AGE}〜${MAX_AGE}の整数で入力してください。`);
+    errors.push(v.ageRange(MIN_AGE, MAX_AGE));
   }
   if (input.department && !isValidDepartment(input.department)) {
-    errors.push(`所属部署は${MAX_DEPARTMENT_LENGTH}文字以内で入力してください。`);
+    errors.push(v.departmentTooLong(MAX_DEPARTMENT_LENGTH));
   }
 
   return { valid: errors.length === 0, errors };

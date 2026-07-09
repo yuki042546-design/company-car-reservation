@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useI18n } from "./LocaleProvider";
 
 export function AdminLoginForm() {
+  const { dict } = useI18n();
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,12 +23,12 @@ export function AdminLoginForm() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.errors?.[0] ?? "ログインに失敗しました。");
+        setError(json.errors?.[0] ?? dict.admin.loginGenericError);
         return;
       }
       router.refresh();
     } catch {
-      setError("通信エラーが発生しました。");
+      setError(dict.admin.networkError);
     } finally {
       setSubmitting(false);
     }
@@ -34,11 +36,11 @@ export function AdminLoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-sm space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-gray-800">管理者ログイン</h2>
+      <h2 className="text-lg font-semibold text-gray-800">{dict.admin.loginTitle}</h2>
       {error && <p className="rounded-lg border border-red-300 bg-red-50 p-2 text-sm text-red-700">{error}</p>}
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="admin-password">
-          管理者パスワード
+          {dict.admin.passwordLabel}
         </label>
         <input
           id="admin-password"
@@ -54,7 +56,7 @@ export function AdminLoginForm() {
         disabled={submitting}
         className="w-full rounded-lg bg-brand-600 py-3 font-semibold text-white shadow hover:bg-brand-700 disabled:opacity-50"
       >
-        {submitting ? "確認中..." : "ログイン"}
+        {submitting ? dict.admin.loginButtonBusy : dict.admin.loginButton}
       </button>
     </form>
   );

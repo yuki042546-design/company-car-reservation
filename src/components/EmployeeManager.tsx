@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Employee } from "@/lib/types";
+import { useI18n } from "./LocaleProvider";
 
 interface EmployeeManagerProps {
   employees: Employee[];
@@ -23,6 +24,7 @@ function parseAge(value: string): { ok: true; age: number | null } | { ok: false
 }
 
 export function EmployeeManager({ employees }: EmployeeManagerProps) {
+  const { dict } = useI18n();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -53,12 +55,12 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
   async function saveEdit(id: string) {
     setError(null);
     if (!editFields.name.trim()) {
-      setError("社員名を入力してください。");
+      setError(dict.employees.nameRequired);
       return;
     }
     const parsedAge = parseAge(editFields.age);
     if (!parsedAge.ok) {
-      setError("年齢は整数で入力してください。");
+      setError(dict.employees.ageInteger);
       return;
     }
 
@@ -75,13 +77,13 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.errors?.[0] ?? "更新に失敗しました。");
+        setError(json.errors?.[0] ?? dict.employees.genericError);
         return;
       }
       setEditingId(null);
       router.refresh();
     } catch {
-      setError("通信エラーが発生しました。");
+      setError(dict.employees.networkError);
     } finally {
       setBusyId(null);
     }
@@ -98,12 +100,12 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.errors?.[0] ?? "更新に失敗しました。");
+        setError(json.errors?.[0] ?? dict.employees.genericError);
         return;
       }
       router.refresh();
     } catch {
-      setError("通信エラーが発生しました。");
+      setError(dict.employees.networkError);
     } finally {
       setBusyId(null);
     }
@@ -113,12 +115,12 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
     e.preventDefault();
     setError(null);
     if (!newName.trim()) {
-      setError("社員名を入力してください。");
+      setError(dict.employees.nameRequired);
       return;
     }
     const parsedAge = parseAge(newAge);
     if (!parsedAge.ok) {
-      setError("年齢は整数で入力してください。");
+      setError(dict.employees.ageInteger);
       return;
     }
 
@@ -135,7 +137,7 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
       });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.errors?.[0] ?? "追加に失敗しました。");
+        setError(json.errors?.[0] ?? dict.employees.addError);
         return;
       }
       setNewName("");
@@ -143,7 +145,7 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
       setNewAge("");
       router.refresh();
     } catch {
-      setError("通信エラーが発生しました。");
+      setError(dict.employees.networkError);
     } finally {
       setAdding(false);
     }
@@ -163,14 +165,14 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
                     type="text"
                     value={editFields.name}
                     onChange={(e) => setEditFields((f) => ({ ...f, name: e.target.value }))}
-                    placeholder="社員名"
+                    placeholder={dict.employees.namePlaceholder}
                     className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm"
                   />
                   <input
                     type="text"
                     value={editFields.department}
                     onChange={(e) => setEditFields((f) => ({ ...f, department: e.target.value }))}
-                    placeholder="所属部署（任意）"
+                    placeholder={dict.employees.departmentPlaceholder}
                     className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm"
                   />
                   <input
@@ -178,7 +180,7 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
                     inputMode="numeric"
                     value={editFields.age}
                     onChange={(e) => setEditFields((f) => ({ ...f, age: e.target.value }))}
-                    placeholder="年齢（任意）"
+                    placeholder={dict.employees.agePlaceholder}
                     min={0}
                     className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm"
                   />
@@ -189,14 +191,14 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
                     disabled={busyId === emp.id}
                     className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
                   >
-                    {busyId === emp.id ? "保存中..." : "保存"}
+                    {busyId === emp.id ? dict.common.saving : dict.common.save}
                   </button>
                   <button
                     onClick={cancelEdit}
                     disabled={busyId === emp.id}
                     className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                   >
-                    キャンセル
+                    {dict.common.cancel}
                   </button>
                 </div>
               </div>
@@ -206,7 +208,9 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
                   <div className={emp.isActive ? "text-gray-800" : "text-gray-400 line-through"}>{emp.name}</div>
                   {(emp.department || emp.age !== null) && (
                     <div className="mt-0.5 text-xs text-gray-400">
-                      {[emp.department, emp.age !== null ? `${emp.age}歳` : null].filter(Boolean).join(" ・ ")}
+                      {[emp.department, emp.age !== null ? dict.employees.ageLabel(emp.age) : null]
+                        .filter(Boolean)
+                        .join(" ・ ")}
                     </div>
                   )}
                 </div>
@@ -215,7 +219,7 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
                     onClick={() => startEdit(emp)}
                     className="rounded-lg border border-gray-300 px-3 py-1 text-xs text-gray-600 hover:bg-gray-50"
                   >
-                    編集
+                    {dict.common.edit}
                   </button>
                   <button
                     onClick={() => toggleActive(emp)}
@@ -226,7 +230,7 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
                         : "rounded-lg border border-brand-100 bg-brand-50 px-3 py-1 text-xs text-brand-600 hover:bg-brand-100 disabled:opacity-50"
                     }
                   >
-                    {emp.isActive ? "無効化" : "有効化"}
+                    {emp.isActive ? dict.employees.deactivate : dict.employees.activate}
                   </button>
                 </div>
               </div>
@@ -236,20 +240,20 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
       </ul>
 
       <form onSubmit={handleAdd} className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
-        <p className="text-xs font-semibold text-gray-500">新しい社員を追加</p>
+        <p className="text-xs font-semibold text-gray-500">{dict.employees.addSectionTitle}</p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="社員名"
+            placeholder={dict.employees.namePlaceholder}
             className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm"
           />
           <input
             type="text"
             value={newDepartment}
             onChange={(e) => setNewDepartment(e.target.value)}
-            placeholder="所属部署（任意）"
+            placeholder={dict.employees.departmentPlaceholder}
             className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm"
           />
           <input
@@ -257,7 +261,7 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
             inputMode="numeric"
             value={newAge}
             onChange={(e) => setNewAge(e.target.value)}
-            placeholder="年齢（任意）"
+            placeholder={dict.employees.agePlaceholder}
             min={0}
             className="rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm"
           />
@@ -267,12 +271,10 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
           disabled={adding}
           className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
         >
-          {adding ? "追加中..." : "追加"}
+          {adding ? dict.common.adding : dict.common.add}
         </button>
       </form>
-      <p className="text-xs text-gray-400">
-        社員を削除すると過去の予約データとの対応が分かりにくくなるため、不要になった社員は「無効化」してください（予約フォームの選択肢から外れます）。
-      </p>
+      <p className="text-xs text-gray-400">{dict.employees.footnote}</p>
     </div>
   );
 }

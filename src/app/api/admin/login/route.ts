@@ -5,20 +5,24 @@ import {
   getAdminCookieMaxAgeSeconds,
   isCorrectAdminPassword,
 } from "@/lib/adminAuth";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import { getLocale } from "@/lib/i18n/getLocale";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  const dict = getDictionary(getLocale());
+
   let body: { password?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ errors: ["リクエストの形式が正しくありません。"] }, { status: 400 });
+    return NextResponse.json({ errors: [dict.apiErrors.invalidRequestBody] }, { status: 400 });
   }
 
   const password = body.password ?? "";
   if (!password || !isCorrectAdminPassword(password)) {
-    return NextResponse.json({ errors: ["パスワードが正しくありません。"] }, { status: 401 });
+    return NextResponse.json({ errors: [dict.apiErrors.wrongPassword] }, { status: 401 });
   }
 
   const token = createAdminSessionToken();

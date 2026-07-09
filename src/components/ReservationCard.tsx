@@ -1,14 +1,16 @@
 import Link from "next/link";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { Reservation } from "@/lib/types";
 import { formatTimeJa } from "@/lib/dateUtils";
 
 interface ReservationCardProps {
   reservation: Reservation;
+  dict: Dictionary;
   showEditLink?: boolean;
   rightSlot?: React.ReactNode;
 }
 
-export function ReservationCard({ reservation, showEditLink = true, rightSlot }: ReservationCardProps) {
+export function ReservationCard({ reservation, dict, showEditLink = true, rightSlot }: ReservationCardProps) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
@@ -22,15 +24,17 @@ export function ReservationCard({ reservation, showEditLink = true, rightSlot }:
             </span>
           </div>
           <p className="mt-1 truncate text-sm text-gray-700">
-            <span className="text-gray-500">行き先: </span>
+            <span className="text-gray-500">{dict.reservationCard.destination}: </span>
             {reservation.destination}
           </p>
           <p className="truncate text-sm text-gray-700">
-            <span className="text-gray-500">用途: </span>
+            <span className="text-gray-500">{dict.reservationCard.purpose}: </span>
             {reservation.purpose}
           </p>
           {reservation.note && (
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-500">備考: {reservation.note}</p>
+            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-500">
+              {dict.reservationCard.note}: {reservation.note}
+            </p>
           )}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
@@ -39,7 +43,7 @@ export function ReservationCard({ reservation, showEditLink = true, rightSlot }:
               href={`/reservations/${reservation.id}/edit`}
               className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
             >
-              変更
+              {dict.reservationCard.change}
             </Link>
           )}
           {rightSlot}

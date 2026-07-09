@@ -46,7 +46,7 @@ export function DateTimeSelect({ id, label, value, onChange, required, helperTex
         />
         <select
           id={`${id}-time`}
-          aria-label={`${label} 時刻`}
+          aria-label={label}
           value={time}
           onChange={(e) => handleTimeChange(e.target.value)}
           className="w-[42%] min-w-0 rounded-lg border border-gray-300 px-2 py-2.5"

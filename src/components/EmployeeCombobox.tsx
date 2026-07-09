@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Employee } from "@/lib/types";
+import { useI18n } from "./LocaleProvider";
 
 interface EmployeeComboboxProps {
   id: string;
@@ -19,6 +20,7 @@ interface EmployeeComboboxProps {
 // 最終的に選べる値は employees リストにある名前のみに制限する
 // （自由入力のまま確定させない＝「プルダウン選択」という要件を維持する）。
 export function EmployeeCombobox({ id, employees, value, onChange, required }: EmployeeComboboxProps) {
+  const { dict } = useI18n();
   const [query, setQuery] = useState(value);
   const [open, setOpen] = useState(false);
   const [filtering, setFiltering] = useState(false);
@@ -118,7 +120,7 @@ export function EmployeeCombobox({ id, employees, value, onChange, required }: E
         }}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        placeholder="タップして選択、または名前で検索"
+        placeholder={dict.form.employeeSearchPlaceholder}
         className="w-full rounded-lg border border-gray-300 py-2.5 pl-3 pr-9"
         required={required}
       />
@@ -127,7 +129,9 @@ export function EmployeeCombobox({ id, employees, value, onChange, required }: E
       </span>
       {open && (
         <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-          {options.length === 0 && <li className="px-3 py-2 text-sm text-gray-400">該当する社員がいません</li>}
+          {options.length === 0 && (
+            <li className="px-3 py-2 text-sm text-gray-400">{dict.form.noMatchingEmployee}</li>
+          )}
           {options.map((emp, i) => (
             <li
               key={emp.id}

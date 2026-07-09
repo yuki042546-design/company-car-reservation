@@ -7,6 +7,7 @@ import { datetimeLocalToIso, isoToDatetimeLocal, nextSlotDatetimeLocal } from "@
 import { validateReservationInput } from "@/lib/reservationRules";
 import { DateTimeSelect } from "./DateTimeSelect";
 import { EmployeeCombobox } from "./EmployeeCombobox";
+import { useI18n } from "./LocaleProvider";
 
 interface ReservationFormProps {
   employees: Employee[];
@@ -26,6 +27,7 @@ function defaultEnd(startValue: string): string {
 }
 
 export function ReservationForm({ employees, mode, reservationId, initial }: ReservationFormProps) {
+  const { dict } = useI18n();
   const router = useRouter();
 
   // 編集対象の予約が、すでに無効化された社員のものである場合も
@@ -66,7 +68,7 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
     setErrors([]);
 
     if (!employeeOptions.some((emp) => emp.name === employeeName)) {
-      setErrors(["使用者名は候補一覧から選択してください。"]);
+      setErrors([dict.form.mustSelectFromList]);
       return;
     }
 
@@ -79,7 +81,7 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
       note: note || null,
     };
 
-    const validation = validateReservationInput(input);
+    const validation = validateReservationInput(input, dict);
     if (!validation.valid) {
       setErrors(validation.errors);
       return;
@@ -97,14 +99,14 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
       const json = await res.json();
 
       if (!res.ok) {
-        setErrors(json.errors ?? ["登録に失敗しました。"]);
+        setErrors(json.errors ?? [dict.form.genericError]);
         return;
       }
 
       router.push("/");
       router.refresh();
     } catch {
-      setErrors(["通信エラーが発生しました。時間をおいて再度お試しください。"]);
+      setErrors([dict.form.networkError]);
     } finally {
       setSubmitting(false);
     }
@@ -124,11 +126,11 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
 
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="employeeName">
-          使用者名 <span className="text-red-500">*</span>
+          {dict.form.employeeName} <span className="text-red-500">*</span>
         </label>
         {employeeOptions.length === 0 ? (
           <p className="rounded-lg border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm text-gray-500">
-            社員が登録されていません
+            {dict.form.noEmployeesRegistered}
           </p>
         ) : (
           <EmployeeCombobox
@@ -143,7 +145,7 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
 
       <DateTimeSelect
         id="startTime"
-        label="開始日時"
+        label={dict.form.startTime}
         value={startTime}
         onChange={setStartTime}
         required
@@ -151,23 +153,23 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
 
       <DateTimeSelect
         id="endTime"
-        label="終了日時"
+        label={dict.form.endTime}
         value={endTime}
         onChange={setEndTime}
         required
-        helperText="30分単位・最短30分〜最大4時間で指定してください。"
+        helperText={dict.form.durationHelp}
       />
 
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="destination">
-          行き先 <span className="text-red-500">*</span>
+          {dict.form.destination} <span className="text-red-500">*</span>
         </label>
         <input
           id="destination"
           type="text"
           value={destination}
           onChange={(e) => setDestination(e.target.value)}
-          placeholder="例: 〇〇商事 本社"
+          placeholder={dict.form.destinationPlaceholder}
           className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
           required
         />
@@ -175,14 +177,14 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
 
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="purpose">
-          用途 <span className="text-red-500">*</span>
+          {dict.form.purpose} <span className="text-red-500">*</span>
         </label>
         <input
           id="purpose"
           type="text"
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
-          placeholder="例: 打ち合わせ"
+          placeholder={dict.form.purposePlaceholder}
           className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
           required
         />
@@ -190,7 +192,7 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
 
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="note">
-          備考
+          {dict.form.note}
         </label>
         <textarea
           id="note"
@@ -206,7 +208,11 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
         disabled={submitting}
         className="w-full rounded-lg bg-brand-600 py-3.5 text-base font-semibold text-white shadow hover:bg-brand-700 disabled:opacity-50"
       >
-        {submitting ? "登録中..." : mode === "create" ? "予約を登録する" : "変更を保存する"}
+        {submitting
+          ? dict.form.submitCreating
+          : mode === "create"
+            ? dict.form.submitCreate
+            : dict.form.submitEdit}
       </button>
     </form>
   );

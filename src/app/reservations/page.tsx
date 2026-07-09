@@ -1,11 +1,15 @@
 import { getAllReservations } from "@/lib/data";
-import { formatDateJa, isSameJstDate } from "@/lib/dateUtils";
+import { formatDate, isSameJstDate } from "@/lib/dateUtils";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import { getLocale } from "@/lib/i18n/getLocale";
 import { ReservationCard } from "@/components/ReservationCard";
 import { SelfDeleteButton } from "@/components/SelfDeleteButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function AllReservationsPage() {
+  const locale = getLocale();
+  const dict = getDictionary(locale);
   const reservations = await getAllReservations();
 
   // 日付ごとにグループ化して表示する
@@ -21,21 +25,22 @@ export default async function AllReservationsPage() {
 
   return (
     <div>
-      <h1 className="mb-5 text-xl font-bold tracking-tight text-gray-900">全予約一覧</h1>
+      <h1 className="mb-5 text-xl font-bold tracking-tight text-gray-900">{dict.reservationsPage.title}</h1>
       {groups.length === 0 ? (
         <p className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-4 text-sm text-gray-400">
-          予約はまだありません。
+          {dict.reservationsPage.empty}
         </p>
       ) : (
         <div className="space-y-6">
           {groups.map((g) => (
             <div key={g.dateIso}>
-              <h3 className="mb-2 text-sm font-semibold text-gray-500">{formatDateJa(g.dateIso)}</h3>
+              <h3 className="mb-2 text-sm font-semibold text-gray-500">{formatDate(g.dateIso, locale)}</h3>
               <div className="space-y-2">
                 {g.items.map((r) => (
                   <ReservationCard
                     key={r.id}
                     reservation={r}
+                    dict={dict}
                     rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
                   />
                 ))}

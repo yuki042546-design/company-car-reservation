@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { Reservation } from "@/lib/types";
 import { formatTimeJa } from "@/lib/dateUtils";
 
@@ -8,6 +9,7 @@ interface TodayGanttChartProps {
   todayStartIso: string;
   /** 現在時刻の ISO 文字列。「現在」ラインの表示に使う。 */
   nowIso: string;
+  dict: Dictionary;
 }
 
 const PX_PER_HOUR = 60;
@@ -49,7 +51,7 @@ function assignLanes(blocks: Block[]): number[] {
   return laneOf;
 }
 
-export function TodayGanttChart({ reservations, todayStartIso, nowIso }: TodayGanttChartProps) {
+export function TodayGanttChart({ reservations, todayStartIso, nowIso, dict }: TodayGanttChartProps) {
   let startHour = DEFAULT_START_HOUR;
   let endHour = DEFAULT_END_HOUR;
   for (const r of reservations) {
@@ -110,7 +112,7 @@ export function TodayGanttChart({ reservations, todayStartIso, nowIso }: TodayGa
             {showNow && (
               <div className="absolute bottom-0 top-0 z-10 w-0.5 bg-red-400" style={{ left: nowLeft }}>
                 <span className="absolute -top-4 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold text-red-500">
-                  現在
+                  {dict.gantt.now}
                 </span>
               </div>
             )}
@@ -138,10 +140,13 @@ export function TodayGanttChart({ reservations, todayStartIso, nowIso }: TodayGa
       </div>
 
       {reservations.length === 0 ? (
-        <p className="mt-3 text-center text-sm text-gray-400">本日の予約はありません。</p>
+        <p className="mt-3 text-center text-sm text-gray-400">{dict.top.noneToday}</p>
       ) : (
         <p className="mt-3 text-xs text-gray-400">
-          表示範囲: {String(startHour).padStart(2, "0")}:00〜{String(endHour).padStart(2, "0")}:00（日本時間）。ブロックをタップすると予約の変更画面を開きます。
+          {dict.gantt.rangeNote(
+            `${String(startHour).padStart(2, "0")}:00`,
+            `${String(endHour).padStart(2, "0")}:00`
+          )}
         </p>
       )}
     </div>

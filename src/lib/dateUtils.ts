@@ -1,13 +1,16 @@
 // 日時まわりのユーティリティ。
-// このアプリは日本国内の1拠点でのみ使う前提のため、表示は常に
+// このアプリは日本国内の1拠点でのみ使う前提のため、表示のタイムゾーンは常に
 // Asia/Tokyo 固定にする（サーバー・クライアントで表示がずれるのを防ぐため）。
+// 一方で表示言語（曜日表記や数字の並び）は locale 引数で切り替える。
+
+import { INTL_LOCALE_TAG, type Locale } from "./i18n/locales";
 
 const TIME_ZONE = "Asia/Tokyo";
-const WEEKDAYS_JA = ["日", "月", "火", "水", "木", "金", "土"];
 
-export function formatDateTimeJa(iso: string): string {
+/** "7/9(木) 14:30" のような日時表示。locale に応じて曜日表記が変わる。 */
+export function formatDateTime(iso: string, locale: Locale): string {
   const d = new Date(iso);
-  const parts = new Intl.DateTimeFormat("ja-JP", {
+  const parts = new Intl.DateTimeFormat(INTL_LOCALE_TAG[locale], {
     timeZone: TIME_ZONE,
     month: "numeric",
     day: "numeric",
@@ -16,10 +19,11 @@ export function formatDateTimeJa(iso: string): string {
     hour12: false,
   }).formatToParts(d);
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  const weekday = WEEKDAYS_JA[getJstWeekdayIndex(d)];
+  const weekday = getJstWeekdayLabel(d, locale);
   return `${get("month")}/${get("day")}(${weekday}) ${get("hour")}:${get("minute")}`;
 }
 
+/** "14:30" のような時刻のみの表示。24時間表記の数字のみなので言語による違いはない。 */
 export function formatTimeJa(iso: string): string {
   const d = new Date(iso);
   const parts = new Intl.DateTimeFormat("ja-JP", {
@@ -32,17 +36,26 @@ export function formatTimeJa(iso: string): string {
   return `${get("hour")}:${get("minute")}`;
 }
 
-export function formatDateJa(iso: string): string {
+/** "2026/7/9(木)" のような日付表示。locale に応じて曜日表記が変わる。 */
+export function formatDate(iso: string, locale: Locale): string {
   const d = new Date(iso);
-  const parts = new Intl.DateTimeFormat("ja-JP", {
+  const parts = new Intl.DateTimeFormat(INTL_LOCALE_TAG[locale], {
     timeZone: TIME_ZONE,
     year: "numeric",
     month: "numeric",
     day: "numeric",
   }).formatToParts(d);
   const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
-  const weekday = WEEKDAYS_JA[getJstWeekdayIndex(d)];
+  const weekday = getJstWeekdayLabel(d, locale);
   return `${get("year")}/${get("month")}/${get("day")}(${weekday})`;
+}
+
+/** 曜日の短縮表記（日本語なら「木」、ベトナム語なら "Th 5" など）を locale に応じて取得する */
+function getJstWeekdayLabel(d: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(INTL_LOCALE_TAG[locale], {
+    timeZone: TIME_ZONE,
+    weekday: "short",
+  }).format(d);
 }
 
 function getJstWeekdayIndex(d: Date): number {

@@ -3,6 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapEmployeeRow, type EmployeeRow } from "@/lib/mappers";
 import { isAdminRequest } from "@/lib/requireAdmin";
 import { isValidAge, isValidDepartment, MAX_AGE, MIN_AGE } from "@/lib/employeeRules";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import { getLocale } from "@/lib/i18n/getLocale";
 
 export const runtime = "nodejs";
 
@@ -14,15 +16,17 @@ interface RouteParams {
 // 予約済みの過去データを保持するため、削除ではなく is_active フラグで
 // 選択肢から外す方式にしている。
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const dict = getDictionary(getLocale());
+
   if (!isAdminRequest()) {
-    return NextResponse.json({ errors: ["管理者のみ操作できます。"] }, { status: 401 });
+    return NextResponse.json({ errors: [dict.apiErrors.adminOnly] }, { status: 401 });
   }
 
   let body: { name?: string; isActive?: boolean; department?: string | null; age?: number | null };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ errors: ["リクエストの形式が正しくありません。"] }, { status: 400 });
+    return NextResponse.json({ errors: [dict.apiErrors.invalidRequestBody] }, { status: 400 });
   }
 
   const update: { name?: string; is_active?: boolean; department?: string | null; age?: number | null } = {};
@@ -30,7 +34,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   if (typeof body.name === "string") {
     const trimmed = body.name.trim();
     if (!trimmed) {
-      return NextResponse.json({ errors: ["社員名を入力してください。"] }, { status: 400 });
+      return NextResponse.json({ errors: [dict.employeeValidation.nameRequired] }, { status: 400 });
     }
     update.name = trimmed;
   }
@@ -40,7 +44,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   if ("department" in body) {
     const department = body.department?.trim() || null;
     if (department && !isValidDepartment(department)) {
-      return NextResponse.json({ errors: ["所属部署は100文字以内で入力してください。"] }, { status: 400 });
+      return NextResponse.json(
+        { errors: [dict.employeeValidation.departmentTooLong(100)] },
+        { status: 400 }
+      );
     }
     update.department = department;
   }
@@ -49,7 +56,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       update.age = null;
     } else if (!isValidAge(body.age)) {
       return NextResponse.json(
-        { errors: [`年齢は${MIN_AGE}〜${MAX_AGE}の整数で入力してください。`] },
+        { errors: [dict.employeeValidation.ageRange(MIN_AGE, MAX_AGE)] },
         { status: 400 }
       );
     } else {
@@ -66,10 +73,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ errors: ["社員情報の更新に失敗しました。"] }, { status: 500 });
+    return NextResponse.json({ errors: [dict.apiErrors.updateEmployeeFailed] }, { status: 500 });
   }
   if (!data) {
-    return NextResponse.json({ errors: ["社員が見つかりません。"] }, { status: 404 });
+    return NextResponse.json({ errors: [dict.apiErrors.employeeNotFound] }, { status: 404 });
   }
 
   return NextResponse.json({ employee: mapEmployeeRow(data as EmployeeRow) });
