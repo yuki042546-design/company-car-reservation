@@ -16,7 +16,7 @@ interface TodayViewProps {
 type ViewMode = "list" | "gantt";
 
 export function TodayView({ reservations, todayStartIso, nowIso }: TodayViewProps) {
-  const { dict } = useI18n();
+  const { dict, locale } = useI18n();
   const [mode, setMode] = useState<ViewMode>("list");
 
   return (
@@ -56,13 +56,20 @@ export function TodayView({ reservations, todayStartIso, nowIso }: TodayViewProp
                 key={r.id}
                 reservation={r}
                 dict={dict}
+                locale={locale}
                 rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
               />
             ))}
           </div>
         )
       ) : (
-        <TodayGanttChart reservations={reservations} todayStartIso={todayStartIso} nowIso={nowIso} dict={dict} />
+        <TodayGanttChart
+          reservations={reservations}
+          todayStartIso={todayStartIso}
+          nowIso={nowIso}
+          dict={dict}
+          locale={locale}
+        />
       )}
     </div>
   );

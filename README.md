@@ -12,6 +12,8 @@
 - 予約変更（全社員が利用可）
 - 予約削除（予約した本人、または管理者のみ。管理者は簡易パスワード認証）
 - 社員名リストの管理（追加・名前/所属部署/年齢の編集・無効化、管理者のみ）
+- 日本語 / ベトナム語の言語切替（ヘッダー右上、Cookieで記憶）
+- 行き先・用途は入力言語と表示言語が異なる場合、自動翻訳された文言を表示
 - スマホ対応のレスポンシブUI
 
 ---
@@ -51,12 +53,22 @@ Supabase プロジェクトの **SQL Editor** で [`supabase/schema.sql`](supaba
 | `destination` | text | 行き先 |
 | `purpose` | text | 用途 |
 | `note` | text (null可) | 備考 |
+| `input_locale` | text | 行き先・用途が入力された言語（`ja`または`vi`、サーバー側で自動判定） |
+| `destination_translated` | text (null可) | 行き先の翻訳キャッシュ（`input_locale`とは逆の言語。翻訳失敗時はnull） |
+| `purpose_translated` | text (null可) | 用途の翻訳キャッシュ（同上） |
 | `created_at` | timestamptz | 作成日時（自動） |
 | `updated_at` | timestamptz | 更新日時（自動更新） |
 
 制約:
 - `end_after_start`: `end_time > start_time` を強制
 - `no_overlapping_reservations`: `tstzrange(start_time, end_time, '[)')` の **EXCLUDE制約**により、同時刻の重複予約をDBレベルで拒否（詳細は後述）
+
+> 既にテーブルを作成済みの場合は、以下のマイグレーションを実行してください（[schema.sql](supabase/schema.sql)に含まれています）。
+> ```sql
+> alter table reservations add column if not exists input_locale text not null default 'ja';
+> alter table reservations add column if not exists destination_translated text;
+> alter table reservations add column if not exists purpose_translated text;
+> ```
 
 ### `employees` テーブル（社員名マスタ）
 
@@ -245,3 +257,27 @@ constraint no_overlapping_reservations exclude using gist (
 
 - **開始/終了日時**（[`src/components/DateTimeSelect.tsx`](src/components/DateTimeSelect.tsx)）: 日付はカレンダー入力（`<input type="date">`）、時刻は00:00〜23:30の30分刻みプルダウンに分離しています。内部的には従来の datetime-local 形式の文字列（`YYYY-MM-DDTHH:mm`）で状態を持つため、`src/lib/dateUtils.ts` の変換関数はそのまま使えます。
 - **使用者名**（[`src/components/EmployeeCombobox.tsx`](src/components/EmployeeCombobox.tsx)）: テキスト入力で候補を絞り込める検索付きプルダウンです。候補一覧にない文字列のままフォーカスを外すと、直前に確定していた値に自動的に戻るため、「自由入力ではなくプルダウン選択」という要件は維持されます。
+
+---
+
+## 11. 多言語対応（日本語 / ベトナム語）の仕組み
+
+### 画面の文言（UI翻訳）
+
+`next-intl` のような URL ルーティング型の i18n ライブラリは使わず、Cookie ベースの軽量な自前実装にしています。
+
+- ヘッダー右上の切替ボタン（[`src/components/LanguageSwitcher.tsx`](src/components/LanguageSwitcher.tsx)）を押すと `locale` Cookie を書き換え、ページを再取得します
+- 画面の文言はすべて [`src/lib/i18n/dictionaries/ja.ts`](src/lib/i18n/dictionaries/ja.ts) と [`vi.ts`](src/lib/i18n/dictionaries/vi.ts) の対訳オブジェクトにまとまっています（バリデーションメッセージやAPIのエラー文言も含む）
+- サーバーコンポーネント・APIルートは `getLocale()`（Cookieを読む）→`getDictionary()` を直接呼び出し、クライアントコンポーネントは `LocaleProvider` が配る React Context（`useI18n()`）から辞書を受け取ります
+- 曜日表記や日付の並び順は `Intl.DateTimeFormat` のロケールタグ（`ja-JP`/`vi-VN`）を切り替えるだけで自動的に対応しています（[`src/lib/dateUtils.ts`](src/lib/dateUtils.ts)）
+- 文言を修正・追加したい場合は、上記2つの辞書ファイルを直接編集してください（TypeScriptの型でキー構造の一致がチェックされます）
+
+### 行き先・用途の自動翻訳
+
+社員が自由入力する「行き先」「用途」は、あらかじめ対訳を用意しておけないため、無料の翻訳API（[MyMemory Translation API](https://mymemory.translated.net/)、登録・APIキー不要）を使って自動翻訳しています（[`src/lib/translate.ts`](src/lib/translate.ts)）。
+
+- 予約の登録・変更時（内容が変わった場合のみ）に、入力文字列にひらがな・カタカナ・漢字が含まれるかで日本語/ベトナム語を判定し、もう一方の言語に翻訳してDBに保存します（`input_locale` / `destination_translated` / `purpose_translated`）
+- 表示時は、閲覧中の言語が入力言語と同じならそのまま、異なれば翻訳キャッシュを表示し「(自動翻訳)」と注記します
+- 翻訳APIが失敗・タイムアウト（5秒）した場合は、予約の登録自体は止めずに翻訳なし（元の文言のまま表示）にフォールバックします
+
+> **品質について**: MyMemoryは無料・登録不要な分、短い文の翻訳が不自然になることがあります（実際の検証でも「Đón khách hàng」→「- 客か？」のような誤訳が確認されています）。より高品質・安定した翻訳が必要な場合は、`translateText()` 内のAPI呼び出し部分を Google Cloud Translation API や DeepL API に差し替えてください（要アカウント作成・APIキー発行）。

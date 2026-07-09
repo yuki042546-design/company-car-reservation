@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import type { Locale } from "@/lib/i18n/locales";
 import type { Reservation } from "@/lib/types";
 import { formatTimeJa } from "@/lib/dateUtils";
+import { displayDestination } from "@/lib/displayText";
 
 interface TodayGanttChartProps {
   reservations: Reservation[];
@@ -10,6 +12,7 @@ interface TodayGanttChartProps {
   /** 現在時刻の ISO 文字列。「現在」ラインの表示に使う。 */
   nowIso: string;
   dict: Dictionary;
+  locale: Locale;
 }
 
 const PX_PER_HOUR = 60;
@@ -51,7 +54,7 @@ function assignLanes(blocks: Block[]): number[] {
   return laneOf;
 }
 
-export function TodayGanttChart({ reservations, todayStartIso, nowIso, dict }: TodayGanttChartProps) {
+export function TodayGanttChart({ reservations, todayStartIso, nowIso, dict, locale }: TodayGanttChartProps) {
   let startHour = DEFAULT_START_HOUR;
   let endHour = DEFAULT_END_HOUR;
   for (const r of reservations) {
@@ -130,7 +133,7 @@ export function TodayGanttChart({ reservations, todayStartIso, nowIso, dict }: T
                     {formatTimeJa(r.startTime)}–{formatTimeJa(r.endTime)}
                   </span>
                   <span className="truncate text-[11px] leading-tight text-brand-50">
-                    {r.employeeName} ・ {r.destination}
+                    {r.employeeName} ・ {displayDestination(r, locale)}
                   </span>
                 </Link>
               );

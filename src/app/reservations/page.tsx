@@ -41,6 +41,7 @@ export default async function AllReservationsPage() {
                     key={r.id}
                     reservation={r}
                     dict={dict}
+                    locale={locale}
                     rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
                   />
                 ))}

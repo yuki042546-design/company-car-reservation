@@ -16,8 +16,8 @@ const vi: Dictionary = {
   },
   nav: {
     appName: "Đặt xe công ty",
-    reservations: "Danh sách đặt xe",
-    admin: "Quản trị viên",
+    reservations: "Lịch xe",
+    admin: "Quản trị",
   },
   languageSwitcher: {
     label: "Ngôn ngữ",
@@ -46,6 +46,7 @@ const vi: Dictionary = {
     purpose: "Mục đích",
     note: "Ghi chú",
     change: "Sửa",
+    autoTranslated: "dịch tự động",
   },
   form: {
     newTitle: "Đặt xe mới",

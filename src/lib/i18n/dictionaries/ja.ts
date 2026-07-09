@@ -45,6 +45,7 @@ const ja = {
     purpose: "用途",
     note: "備考",
     change: "変更",
+    autoTranslated: "自動翻訳",
   },
   form: {
     newTitle: "新規予約",

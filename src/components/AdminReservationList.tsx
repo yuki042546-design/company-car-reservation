@@ -11,7 +11,7 @@ interface AdminReservationListProps {
 }
 
 export function AdminReservationList({ reservations }: AdminReservationListProps) {
-  const { dict } = useI18n();
+  const { dict, locale } = useI18n();
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +47,7 @@ export function AdminReservationList({ reservations }: AdminReservationListProps
           key={r.id}
           reservation={r}
           dict={dict}
+          locale={locale}
           showEditLink
           rightSlot={
             <button

@@ -10,10 +10,17 @@ export const INTL_LOCALE_TAG: Record<Locale, string> = {
   vi: "vi-VN",
 };
 
-// 言語切替ボタンに表示するラベル
+// 言語切替ボタンのフルラベル（title属性など、スペースに余裕がある場所用）
 export const LOCALE_LABELS: Record<Locale, string> = {
   ja: "日本語",
   vi: "Tiếng Việt",
+};
+
+// 言語切替ボタンの短縮ラベル。スマホ幅でもヘッダーがはみ出さないよう、
+// ボタン本体には常にこちらを使う（フルラベルは title 属性で補う）。
+export const LOCALE_SHORT_LABELS: Record<Locale, string> = {
+  ja: "JP",
+  vi: "VN",
 };
 
 export const LOCALES: Locale[] = ["ja", "vi"];

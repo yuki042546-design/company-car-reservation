@@ -1,16 +1,23 @@
 import Link from "next/link";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import type { Locale } from "@/lib/i18n/locales";
 import type { Reservation } from "@/lib/types";
 import { formatTimeJa } from "@/lib/dateUtils";
+import { displayDestination, displayPurpose } from "@/lib/displayText";
 
 interface ReservationCardProps {
   reservation: Reservation;
   dict: Dictionary;
+  locale: Locale;
   showEditLink?: boolean;
   rightSlot?: React.ReactNode;
 }
 
-export function ReservationCard({ reservation, dict, showEditLink = true, rightSlot }: ReservationCardProps) {
+export function ReservationCard({ reservation, dict, locale, showEditLink = true, rightSlot }: ReservationCardProps) {
+  const isTranslatedDestination =
+    reservation.inputLocale !== locale && reservation.destinationTranslated !== null;
+  const isTranslatedPurpose = reservation.inputLocale !== locale && reservation.purposeTranslated !== null;
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
@@ -25,11 +32,17 @@ export function ReservationCard({ reservation, dict, showEditLink = true, rightS
           </div>
           <p className="mt-1 truncate text-sm text-gray-700">
             <span className="text-gray-500">{dict.reservationCard.destination}: </span>
-            {reservation.destination}
+            {displayDestination(reservation, locale)}
+            {isTranslatedDestination && (
+              <span className="ml-1 text-xs text-gray-400">({dict.reservationCard.autoTranslated})</span>
+            )}
           </p>
           <p className="truncate text-sm text-gray-700">
             <span className="text-gray-500">{dict.reservationCard.purpose}: </span>
-            {reservation.purpose}
+            {displayPurpose(reservation, locale)}
+            {isTranslatedPurpose && (
+              <span className="ml-1 text-xs text-gray-400">({dict.reservationCard.autoTranslated})</span>
+            )}
           </p>
           {reservation.note && (
             <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-500">

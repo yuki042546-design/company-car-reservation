@@ -52,6 +52,18 @@ create table if not exists reservations (
 
 comment on table reservations is '社用車（1台）の予約。no_overlapping_reservations 制約により同時刻の重複予約は DB レベルで拒否される。';
 
+-- 行き先・用途の多言語表示用。入力言語（ja/vi）と、もう一方の言語への
+-- 機械翻訳結果をキャッシュしておく（毎回翻訳APIを呼ばずに済ませるため）。
+-- 翻訳に失敗した場合は *_translated が null のままになり、表示側は
+-- 元の文言（destination/purpose）にフォールバックする。
+alter table reservations add column if not exists input_locale text not null default 'ja';
+alter table reservations add column if not exists destination_translated text;
+alter table reservations add column if not exists purpose_translated text;
+
+comment on column reservations.input_locale is '行き先・用途が入力された言語（ja または vi）。サーバー側で自動判定して設定する。';
+comment on column reservations.destination_translated is '行き先の機械翻訳キャッシュ（input_localeとは逆の言語）。翻訳失敗時はnull。';
+comment on column reservations.purpose_translated is '用途の機械翻訳キャッシュ（input_localeとは逆の言語）。翻訳失敗時はnull。';
+
 -- updated_at を自動更新するトリガー
 create or replace function set_updated_at()
 returns trigger as $$

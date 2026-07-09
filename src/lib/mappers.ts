@@ -1,3 +1,4 @@
+import type { Locale } from "./i18n/locales";
 import type { Employee, Reservation } from "./types";
 
 // Supabase (snake_case) の行を、アプリ内で使う camelCase の型に変換する。
@@ -12,6 +13,9 @@ export interface ReservationRow {
   destination: string;
   purpose: string;
   note: string | null;
+  input_locale: Locale;
+  destination_translated: string | null;
+  purpose_translated: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -25,6 +29,9 @@ export function mapReservationRow(row: ReservationRow): Reservation {
     destination: row.destination,
     purpose: row.purpose,
     note: row.note,
+    inputLocale: row.input_locale,
+    destinationTranslated: row.destination_translated,
+    purposeTranslated: row.purpose_translated,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

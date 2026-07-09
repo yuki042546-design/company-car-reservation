@@ -6,6 +6,7 @@ import { hasOverlappingReservation, isExclusionViolation } from "@/lib/overlapCh
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { isAdminRequest } from "@/lib/requireAdmin";
+import { translateReservationFields } from "@/lib/translate";
 import type { ReservationInput } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -55,6 +56,25 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ errors: [dict.validation.overlap] }, { status: 409 });
     }
 
+    // 行き先・用途の文言が変わっていない場合は、翻訳APIを呼び直さず
+    // 既存の翻訳キャッシュをそのまま使い回す（無料APIの利用量節約のため）。
+    const { data: existingRow } = await supabase
+      .from("reservations")
+      .select("destination, purpose, input_locale, destination_translated, purpose_translated")
+      .eq("id", params.id)
+      .maybeSingle();
+
+    const contentUnchanged =
+      !!existingRow && existingRow.destination === body.destination && existingRow.purpose === body.purpose;
+
+    const { inputLocale, destinationTranslated, purposeTranslated } = contentUnchanged
+      ? {
+          inputLocale: existingRow!.input_locale,
+          destinationTranslated: existingRow!.destination_translated,
+          purposeTranslated: existingRow!.purpose_translated,
+        }
+      : await translateReservationFields(body.destination, body.purpose);
+
     const { data, error } = await supabase
       .from("reservations")
       .update({
@@ -64,6 +84,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         destination: body.destination,
         purpose: body.purpose,
         note: body.note ?? null,
+        input_locale: inputLocale,
+        destination_translated: destinationTranslated,
+        purpose_translated: purposeTranslated,
       })
       .eq("id", params.id)
       .select("*")

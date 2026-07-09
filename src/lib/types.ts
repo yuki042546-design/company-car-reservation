@@ -1,3 +1,5 @@
+import type { Locale } from "./i18n/locales";
+
 export interface Reservation {
   id: string;
   employeeName: string;
@@ -6,6 +8,12 @@ export interface Reservation {
   destination: string;
   purpose: string;
   note: string | null;
+  /** destination/purpose が入力された言語。表示側の翻訳出し分けに使う。 */
+  inputLocale: Locale;
+  /** 行き先の機械翻訳キャッシュ（inputLocaleとは逆の言語）。翻訳失敗時はnull。 */
+  destinationTranslated: string | null;
+  /** 用途の機械翻訳キャッシュ（inputLocaleとは逆の言語）。翻訳失敗時はnull。 */
+  purposeTranslated: string | null;
   createdAt: string;
   updatedAt: string;
 }

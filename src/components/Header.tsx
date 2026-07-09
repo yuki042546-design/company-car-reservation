@@ -9,8 +9,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2.5 text-[15px] font-bold tracking-tight text-gray-900">
+      <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-4">
+        <Link
+          href="/"
+          className="flex min-w-0 shrink items-center gap-2 text-[14px] font-bold tracking-tight text-gray-900 sm:gap-2.5 sm:text-[15px]"
+        >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
             <svg
               viewBox="0 0 24 24"
@@ -27,10 +30,10 @@ export function Header() {
               <path d="M15.5 8.1 18 5.6M17.7 5.4l2 2" />
             </svg>
           </span>
-          <span className="whitespace-nowrap">{dict.nav.appName}</span>
+          <span className="truncate">{dict.nav.appName}</span>
         </Link>
-        <div className="flex items-center gap-4">
-          <nav className="flex gap-5 text-[13px] font-semibold">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+          <nav className="flex gap-2.5 text-[12px] font-semibold sm:gap-5 sm:text-[13px]">
             <Link href="/reservations" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
               {dict.nav.reservations}
             </Link>

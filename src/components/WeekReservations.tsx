@@ -37,6 +37,7 @@ export function WeekReservations({ reservations, weekStartIso, locale, dict }: W
                     key={r.id}
                     reservation={r}
                     dict={dict}
+                    locale={locale}
                     rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
                   />
                 ))}

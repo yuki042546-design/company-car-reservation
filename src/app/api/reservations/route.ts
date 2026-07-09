@@ -5,6 +5,7 @@ import { validateReservationInput } from "@/lib/reservationRules";
 import { hasOverlappingReservation, isExclusionViolation } from "@/lib/overlapCheck";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
+import { translateReservationFields } from "@/lib/translate";
 import type { ReservationInput } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -60,6 +61,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ errors: [dict.validation.overlap] }, { status: 409 });
     }
 
+    const { inputLocale, destinationTranslated, purposeTranslated } = await translateReservationFields(
+      body.destination,
+      body.purpose
+    );
+
     const { data, error } = await supabase
       .from("reservations")
       .insert({
@@ -69,6 +75,9 @@ export async function POST(request: NextRequest) {
         destination: body.destination,
         purpose: body.purpose,
         note: body.note ?? null,
+        input_locale: inputLocale,
+        destination_translated: destinationTranslated,
+        purpose_translated: purposeTranslated,
       })
       .select("*")
       .single();
