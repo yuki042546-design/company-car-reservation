@@ -1,9 +1,10 @@
-import { getAllEmployees, getAllReservations } from "@/lib/data";
+import { getAllEmployees, getAllReservations, getReservationLogs } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { isAdminRequest } from "@/lib/requireAdmin";
 import { AdminLoginForm } from "@/components/AdminLoginForm";
 import { AdminLogoutButton } from "@/components/AdminLogoutButton";
+import { AdminOperationHistory } from "@/components/AdminOperationHistory";
 import { AdminReservationList } from "@/components/AdminReservationList";
 import { EmployeeManager } from "@/components/EmployeeManager";
 
@@ -11,7 +12,8 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const isAdmin = isAdminRequest();
-  const dict = getDictionary(getLocale());
+  const locale = getLocale();
+  const dict = getDictionary(locale);
 
   if (!isAdmin) {
     return (
@@ -22,7 +24,11 @@ export default async function AdminPage() {
     );
   }
 
-  const [reservations, employees] = await Promise.all([getAllReservations(), getAllEmployees()]);
+  const [reservations, employees, logs] = await Promise.all([
+    getAllReservations(),
+    getAllEmployees(),
+    getReservationLogs(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -39,6 +45,11 @@ export default async function AdminPage() {
       <section>
         <h2 className="mb-3 text-lg font-bold tracking-tight text-gray-900">{dict.admin.employeesSectionTitle}</h2>
         <EmployeeManager employees={employees} />
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-bold tracking-tight text-gray-900">{dict.admin.historySectionTitle}</h2>
+        <AdminOperationHistory logs={logs} dict={dict} locale={locale} />
       </section>
     </div>
   );

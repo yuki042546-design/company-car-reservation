@@ -7,6 +7,7 @@ import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { isAdminRequest } from "@/lib/requireAdmin";
 import { translateReservationFields } from "@/lib/translate";
+import { logReservationAction } from "@/lib/reservationLogs";
 import type { ReservationInput } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -102,6 +103,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ errors: [dict.apiErrors.reservationNotFound] }, { status: 404 });
     }
 
+    await logReservationAction(supabase, "update", {
+      employeeName: body.employeeName,
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+      destination: body.destination,
+    });
+
     return NextResponse.json({ reservation: mapReservationRow(data as ReservationRow) });
   } catch (err) {
     console.error(err);
@@ -134,7 +142,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
   const { data: existing, error: fetchError } = await supabase
     .from("reservations")
-    .select("employee_name")
+    .select("employee_name, start_time, end_time, destination")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -159,6 +167,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   if (error) {
     return NextResponse.json({ errors: [dict.apiErrors.deleteFailed] }, { status: 500 });
   }
+
+  await logReservationAction(supabase, "delete", {
+    employeeName: existing.employee_name,
+    startTime: existing.start_time,
+    endTime: existing.end_time,
+    destination: existing.destination,
+  });
 
   return NextResponse.json({ ok: true });
 }

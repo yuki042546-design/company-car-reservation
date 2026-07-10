@@ -3,7 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Employee, Reservation } from "@/lib/types";
-import { datetimeLocalToIso, isoToDatetimeLocal, nextSlotDatetimeLocal } from "@/lib/dateUtils";
+import {
+  combineDatetimeLocal,
+  datetimeLocalToIso,
+  isoToDatetimeLocal,
+  nextSlotDatetimeLocal,
+  splitDatetimeLocal,
+} from "@/lib/dateUtils";
 import { validateReservationInput } from "@/lib/reservationRules";
 import { DateTimeSelect } from "./DateTimeSelect";
 import { EmployeeCombobox } from "./EmployeeCombobox";
@@ -14,10 +20,19 @@ interface ReservationFormProps {
   mode: "create" | "edit";
   reservationId?: string;
   initial?: Reservation | null;
+  /** カレンダーで日付をタップして遷移してきた場合の初期日付（"YYYY-MM-DD"） */
+  initialDate?: string;
 }
 
-function defaultStart(): string {
-  return nextSlotDatetimeLocal();
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function defaultStart(initialDate?: string): string {
+  const base = nextSlotDatetimeLocal();
+  if (initialDate && DATE_ONLY_PATTERN.test(initialDate)) {
+    const { time } = splitDatetimeLocal(base);
+    return combineDatetimeLocal(initialDate, time);
+  }
+  return base;
 }
 
 function defaultEnd(startValue: string): string {
@@ -26,7 +41,7 @@ function defaultEnd(startValue: string): string {
   return isoToDatetimeLocal(end.toISOString());
 }
 
-export function ReservationForm({ employees, mode, reservationId, initial }: ReservationFormProps) {
+export function ReservationForm({ employees, mode, reservationId, initial, initialDate }: ReservationFormProps) {
   const { dict } = useI18n();
   const router = useRouter();
 
@@ -51,10 +66,10 @@ export function ReservationForm({ employees, mode, reservationId, initial }: Res
 
   const [employeeName, setEmployeeName] = useState(initial?.employeeName ?? employees[0]?.name ?? "");
   const [startTime, setStartTime] = useState(
-    initial ? isoToDatetimeLocal(initial.startTime) : defaultStart()
+    initial ? isoToDatetimeLocal(initial.startTime) : defaultStart(initialDate)
   );
   const [endTime, setEndTime] = useState(
-    initial ? isoToDatetimeLocal(initial.endTime) : defaultEnd(defaultStart())
+    initial ? isoToDatetimeLocal(initial.endTime) : defaultEnd(defaultStart(initialDate))
   );
   const [destination, setDestination] = useState(initial?.destination ?? "");
   const [purpose, setPurpose] = useState(initial?.purpose ?? "");

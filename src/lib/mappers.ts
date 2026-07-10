@@ -1,5 +1,5 @@
 import type { Locale } from "./i18n/locales";
-import type { Employee, Reservation } from "./types";
+import type { Employee, Reservation, ReservationLog, ReservationLogAction } from "./types";
 
 // Supabase (snake_case) の行を、アプリ内で使う camelCase の型に変換する。
 // 将来 Google カレンダー連携などで別のデータソースを足す場合も、
@@ -53,6 +53,28 @@ export function mapEmployeeRow(row: EmployeeRow): Employee {
     department: row.department,
     age: row.age,
     isActive: row.is_active,
+    createdAt: row.created_at,
+  };
+}
+
+export interface ReservationLogRow {
+  id: string;
+  action: ReservationLogAction;
+  employee_name: string;
+  reservation_start_time: string | null;
+  reservation_end_time: string | null;
+  reservation_destination: string | null;
+  created_at: string;
+}
+
+export function mapReservationLogRow(row: ReservationLogRow): ReservationLog {
+  return {
+    id: row.id,
+    action: row.action,
+    employeeName: row.employee_name,
+    reservationStartTime: row.reservation_start_time,
+    reservationEndTime: row.reservation_end_time,
+    reservationDestination: row.reservation_destination,
     createdAt: row.created_at,
   };
 }

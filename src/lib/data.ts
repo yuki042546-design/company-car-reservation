@@ -1,6 +1,13 @@
 import { getSupabaseAdmin } from "./supabaseAdmin";
-import { mapEmployeeRow, mapReservationRow, type EmployeeRow, type ReservationRow } from "./mappers";
-import type { Employee, Reservation } from "./types";
+import {
+  mapEmployeeRow,
+  mapReservationLogRow,
+  mapReservationRow,
+  type EmployeeRow,
+  type ReservationLogRow,
+  type ReservationRow,
+} from "./mappers";
+import type { Employee, Reservation, ReservationLog } from "./types";
 import { getThisWeekRangeJst, getTodayRangeJst } from "./dateUtils";
 
 // サーバーコンポーネント（page.tsx）から直接呼び出すデータ取得関数。
@@ -17,7 +24,7 @@ export async function getAllReservations(): Promise<Reservation[]> {
   return (data as ReservationRow[]).map(mapReservationRow);
 }
 
-async function getReservationsInRange(start: Date, end: Date): Promise<Reservation[]> {
+export async function getReservationsInRange(start: Date, end: Date): Promise<Reservation[]> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("reservations")
@@ -65,4 +72,15 @@ export async function getAllEmployees(): Promise<Employee[]> {
     .order("created_at", { ascending: true });
   if (error) throw error;
   return (data as EmployeeRow[]).map(mapEmployeeRow);
+}
+
+export async function getReservationLogs(limit = 200): Promise<ReservationLog[]> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("reservation_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data as ReservationLogRow[]).map(mapReservationLogRow);
 }

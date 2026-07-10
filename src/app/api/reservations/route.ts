@@ -6,6 +6,7 @@ import { hasOverlappingReservation, isExclusionViolation } from "@/lib/overlapCh
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { translateReservationFields } from "@/lib/translate";
+import { logReservationAction } from "@/lib/reservationLogs";
 import type { ReservationInput } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -88,6 +89,13 @@ export async function POST(request: NextRequest) {
       }
       throw error;
     }
+
+    await logReservationAction(supabase, "create", {
+      employeeName: body.employeeName,
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+      destination: body.destination,
+    });
 
     return NextResponse.json({ reservation: mapReservationRow(data as ReservationRow) }, { status: 201 });
   } catch (err) {

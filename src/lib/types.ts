@@ -45,3 +45,15 @@ export interface EmployeeInput {
 export interface ApiErrorResponse {
   errors: string[];
 }
+
+export type ReservationLogAction = "create" | "update" | "delete";
+
+export interface ReservationLog {
+  id: string;
+  action: ReservationLogAction;
+  employeeName: string;
+  reservationStartTime: string | null;
+  reservationEndTime: string | null;
+  reservationDestination: string | null;
+  createdAt: string;
+}

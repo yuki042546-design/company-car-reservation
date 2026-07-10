@@ -82,6 +82,23 @@ for each row execute function set_updated_at();
 create index if not exists idx_reservations_start_time on reservations (start_time);
 
 -- ------------------------------------------------------------
+-- reservation_logs: 予約の登録・変更・削除の操作履歴
+-- ------------------------------------------------------------
+create table if not exists reservation_logs (
+  id uuid primary key default gen_random_uuid(),
+  action text not null check (action in ('create', 'update', 'delete')),
+  employee_name text not null,
+  reservation_start_time timestamptz,
+  reservation_end_time timestamptz,
+  reservation_destination text,
+  created_at timestamptz not null default now()
+);
+
+comment on table reservation_logs is '予約の登録・変更・削除の操作履歴。対象の予約が後で削除されても履歴は残るよう、reservation テーブルへの外部キーは持たせず、実行時点の内容をスナップショットとして保持する。';
+
+create index if not exists idx_reservation_logs_created_at on reservation_logs (created_at desc);
+
+-- ------------------------------------------------------------
 -- Row Level Security
 -- このアプリはブラウザから直接 Supabase を呼ばず、必ず Next.js の
 -- API ルート（サーバー側・service role key）を経由します。
@@ -90,6 +107,7 @@ create index if not exists idx_reservations_start_time on reservations (start_ti
 -- ------------------------------------------------------------
 alter table employees enable row level security;
 alter table reservations enable row level security;
+alter table reservation_logs enable row level security;
 
 -- ------------------------------------------------------------
 -- 初期データ：仮の社員名10名

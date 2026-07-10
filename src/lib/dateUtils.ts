@@ -72,6 +72,11 @@ function jstDateKey(d: Date): string {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: TIME_ZONE }).format(d); // "YYYY-MM-DD"
 }
 
+/** ISO文字列から "YYYY-MM-DD"（Asia/Tokyo）の日付キーを取得する。カレンダー表示用。 */
+export function getJstDateKey(iso: string): string {
+  return jstDateKey(new Date(iso));
+}
+
 export function isSameJstDate(isoA: string, isoB: string): boolean {
   return jstDateKey(new Date(isoA)) === jstDateKey(new Date(isoB));
 }
@@ -92,6 +97,50 @@ export function getThisWeekRangeJst(now: Date = new Date()): { start: Date; end:
   const start = new Date(todayStart.getTime() - daysSinceMonday * 24 * 60 * 60 * 1000);
   const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
   return { start, end };
+}
+
+/** 今月（Asia/Tokyo）の "YYYY-MM" キー。省略時は現在時刻から算出する。 */
+function currentMonthKey(now: Date = new Date()): string {
+  return jstDateKey(now).slice(0, 7);
+}
+
+/** "YYYY-MM" キーを ±delta ヶ月ずらした "YYYY-MM" キーを返す（カレンダーの月送りに使う）。 */
+export function shiftMonthKey(monthKey: string, delta: number): string {
+  const [y, m] = monthKey.split("-").map(Number);
+  const d = new Date(Date.UTC(y!, m! - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/** 指定した月（Asia/Tokyo、省略時は今月）の 1日 00:00〜翌月1日 00:00 の範囲を返す */
+export function getMonthRangeJst(
+  monthKey?: string,
+  now: Date = new Date()
+): { start: Date; end: Date; monthKey: string } {
+  const key = monthKey ?? currentMonthKey(now);
+  const start = new Date(`${key}-01T00:00:00+09:00`);
+  const nextMonthKey = shiftMonthKey(key, 1);
+  const end = new Date(`${nextMonthKey}-01T00:00:00+09:00`);
+  return { start, end, monthKey: key };
+}
+
+/** "2026年7月" のような月ラベル表示。locale に応じて表記が変わる。 */
+export function formatMonthLabel(monthKey: string, locale: Locale): string {
+  const [y, m] = monthKey.split("-").map(Number);
+  const d = new Date(Date.UTC(y!, m! - 1, 1));
+  return new Intl.DateTimeFormat(INTL_LOCALE_TAG[locale], {
+    timeZone: "UTC",
+    year: "numeric",
+    month: "long",
+  }).format(d);
+}
+
+/** 月曜始まりの曜日見出しラベル（月, 火, ... のような短縮表記）を locale に応じて返す */
+export function getWeekdayHeaderLabels(locale: Locale): string[] {
+  // 2024-01-01 は月曜日（timeZone: UTC で固定的に曜日を算出するための基準日）
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(Date.UTC(2024, 0, 1 + i));
+    return new Intl.DateTimeFormat(INTL_LOCALE_TAG[locale], { timeZone: "UTC", weekday: "short" }).format(d);
+  });
 }
 
 /** <input type="datetime-local"> の value ("YYYY-MM-DDTHH:mm") を ISO 文字列に変換 */
