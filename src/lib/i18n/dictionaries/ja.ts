@@ -15,8 +15,10 @@ const ja = {
   },
   nav: {
     appName: "社用車予約",
+    top: "トップ",
     reservations: "予約一覧",
     admin: "管理者",
+    guide: "使い方",
   },
   languageSwitcher: {
     label: "言語",
@@ -45,6 +47,7 @@ const ja = {
       "管理者ページでは、全予約の編集・削除、社員名リストの管理、操作履歴（予約・変更・削除の記録）の確認ができます（管理者パスワードでログイン）。",
   },
   top: {
+    scheduleTitle: "予定",
     todayTitle: "今日の予約",
     weekTitle: "今週の予約",
     allReservationsLink: "全予約一覧 →",
@@ -122,6 +125,13 @@ const ja = {
     countLabel: (n: number) => `表示件数: ${n}件`,
     confirmDelete: "この予約を削除します。よろしいですか？",
     deleteGenericError: "削除に失敗しました。",
+    selectAll: "すべて選択",
+    deselectAll: "選択を解除",
+    selectRowLabel: "この予約を選択",
+    bulkDeleteButton: (n: number) => (n > 0 ? `選択した${n}件を削除` : "選択した予約を削除"),
+    bulkDeleteButtonBusy: "削除中...",
+    confirmBulkDelete: (n: number) => `選択した${n}件の予約を削除します。よろしいですか？`,
+    bulkDeleteGenericError: "一部の予約の削除に失敗しました。",
     historySectionTitle: "操作履歴",
     historyEmpty: "操作履歴はまだありません。",
     historyActionCreate: "予約",

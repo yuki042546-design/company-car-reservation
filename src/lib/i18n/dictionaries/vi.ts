@@ -16,8 +16,10 @@ const vi: Dictionary = {
   },
   nav: {
     appName: "Đặt xe công ty",
+    top: "Trang chủ",
     reservations: "Lịch xe",
     admin: "Quản trị",
+    guide: "Hướng dẫn",
   },
   languageSwitcher: {
     label: "Ngôn ngữ",
@@ -46,6 +48,7 @@ const vi: Dictionary = {
       "Trang quản trị cho phép sửa/xóa tất cả lịch đặt xe, quản lý danh sách nhân viên, và xem lịch sử thao tác (đặt xe, sửa, xóa) sau khi đăng nhập bằng mật khẩu quản trị viên.",
   },
   top: {
+    scheduleTitle: "Lịch trình",
     todayTitle: "Lịch đặt xe hôm nay",
     weekTitle: "Lịch đặt xe tuần này",
     allReservationsLink: "Xem tất cả →",
@@ -123,6 +126,13 @@ const vi: Dictionary = {
     countLabel: (n) => `Số lượng hiển thị: ${n}`,
     confirmDelete: "Bạn có chắc chắn muốn xóa lịch đặt xe này không?",
     deleteGenericError: "Xóa không thành công.",
+    selectAll: "Chọn tất cả",
+    deselectAll: "Bỏ chọn tất cả",
+    selectRowLabel: "Chọn lịch đặt xe này",
+    bulkDeleteButton: (n) => (n > 0 ? `Xóa ${n} mục đã chọn` : "Xóa các mục đã chọn"),
+    bulkDeleteButtonBusy: "Đang xóa...",
+    confirmBulkDelete: (n) => `Bạn có chắc chắn muốn xóa ${n} lịch đặt xe đã chọn không?`,
+    bulkDeleteGenericError: "Không thể xóa một số lịch đặt xe.",
     historySectionTitle: "Lịch sử thao tác",
     historyEmpty: "Chưa có lịch sử thao tác nào.",
     historyActionCreate: "Đặt xe",
