@@ -31,6 +31,7 @@ const vi: Dictionary = {
     viewCalendar: "Lịch",
     viewGantt: "Thời gian chi tiết",
     calendarHint: "Chạm vào ngày để tiến hành đặt xe.",
+    calendarHintSelected: "Chạm lại một lần nữa để tiến hành đặt xe.",
     prevMonth: "Tháng trước",
     nextMonth: "Tháng sau",
   },

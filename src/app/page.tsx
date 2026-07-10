@@ -23,7 +23,6 @@ export default async function TopPage({ searchParams }: TopPageProps) {
 
   const { start: monthStart, end: monthEnd, monthKey } = getMonthRangeJst(searchParams.month);
   const monthReservations = await getReservationsInRange(monthStart, monthEnd);
-  const reservationDateKeys = Array.from(new Set(monthReservations.map((r) => getJstDateKey(r.startTime))));
 
   return (
     <div className="space-y-8">
@@ -34,9 +33,9 @@ export default async function TopPage({ searchParams }: TopPageProps) {
             prevMonthKey: shiftMonthKey(monthKey, -1),
             nextMonthKey: shiftMonthKey(monthKey, 1),
             todayKey: getJstDateKey(now.toISOString()),
-            reservationDateKeys,
+            monthReservations,
           }}
-          gantt={{ reservations: today, todayStartIso: todayStart.toISOString(), nowIso: now.toISOString() }}
+          gantt={{ todayReservations: today, todayStartIso: todayStart.toISOString(), nowIso: now.toISOString() }}
         />
       </section>
 

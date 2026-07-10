@@ -7,10 +7,12 @@ import { displayDestination } from "@/lib/displayText";
 
 interface TodayGanttChartProps {
   reservations: Reservation[];
-  /** 今日(JST)の 00:00 を表す ISO 文字列。時間軸の基準点として使う。 */
-  todayStartIso: string;
-  /** 現在時刻の ISO 文字列。「現在」ラインの表示に使う。 */
+  /** 表示対象の日(JST)の 00:00 を表す ISO 文字列。時間軸の基準点として使う。今日とは限らない。 */
+  dayStartIso: string;
+  /** 現在時刻の ISO 文字列。「現在」ラインの表示に使う（表示対象日以外では自然に表示されない）。 */
   nowIso: string;
+  /** 予約が0件の場合の表示文言。省略時は「本日の予約はありません。」を使う。 */
+  emptyMessage?: string;
   dict: Dictionary;
   locale: Locale;
 }
@@ -22,8 +24,8 @@ const MIN_BLOCK_WIDTH = 112;
 const LANE_HEIGHT = 56;
 const LANE_GAP_PX = 6;
 
-function hoursSinceMidnight(todayStartIso: string, targetIso: string): number {
-  return (new Date(targetIso).getTime() - new Date(todayStartIso).getTime()) / (60 * 60 * 1000);
+function hoursSinceMidnight(dayStartIso: string, targetIso: string): number {
+  return (new Date(targetIso).getTime() - new Date(dayStartIso).getTime()) / (60 * 60 * 1000);
 }
 
 interface Block {
@@ -54,12 +56,19 @@ function assignLanes(blocks: Block[]): number[] {
   return laneOf;
 }
 
-export function TodayGanttChart({ reservations, todayStartIso, nowIso, dict, locale }: TodayGanttChartProps) {
+export function TodayGanttChart({
+  reservations,
+  dayStartIso,
+  nowIso,
+  emptyMessage,
+  dict,
+  locale,
+}: TodayGanttChartProps) {
   let startHour = DEFAULT_START_HOUR;
   let endHour = DEFAULT_END_HOUR;
   for (const r of reservations) {
-    const s = Math.max(0, hoursSinceMidnight(todayStartIso, r.startTime));
-    const e = Math.min(24, hoursSinceMidnight(todayStartIso, r.endTime));
+    const s = Math.max(0, hoursSinceMidnight(dayStartIso, r.startTime));
+    const e = Math.min(24, hoursSinceMidnight(dayStartIso, r.endTime));
     startHour = Math.min(startHour, Math.floor(s));
     endHour = Math.max(endHour, Math.ceil(e));
   }
@@ -71,8 +80,8 @@ export function TodayGanttChart({ reservations, todayStartIso, nowIso, dict, loc
   const hourTicks = Array.from({ length: totalHours + 1 }, (_, i) => startHour + i);
 
   const blocks: Block[] = reservations.map((r) => {
-    const s = Math.max(0, hoursSinceMidnight(todayStartIso, r.startTime));
-    const e = Math.min(24, hoursSinceMidnight(todayStartIso, r.endTime));
+    const s = Math.max(0, hoursSinceMidnight(dayStartIso, r.startTime));
+    const e = Math.min(24, hoursSinceMidnight(dayStartIso, r.endTime));
     const left = Math.max(0, (s - startHour) * PX_PER_HOUR);
     const width = Math.max(MIN_BLOCK_WIDTH, (e - s) * PX_PER_HOUR);
     return { reservation: r, left, width };
@@ -81,7 +90,7 @@ export function TodayGanttChart({ reservations, todayStartIso, nowIso, dict, loc
   const laneCount = lanes.length > 0 ? Math.max(...lanes) + 1 : 1;
   const trackHeight = laneCount * LANE_HEIGHT + 12;
 
-  const nowHours = hoursSinceMidnight(todayStartIso, nowIso);
+  const nowHours = hoursSinceMidnight(dayStartIso, nowIso);
   const showNow = nowHours >= startHour && nowHours <= endHour;
   const nowLeft = (nowHours - startHour) * PX_PER_HOUR;
 
@@ -143,7 +152,7 @@ export function TodayGanttChart({ reservations, todayStartIso, nowIso, dict, loc
       </div>
 
       {reservations.length === 0 ? (
-        <p className="mt-3 text-center text-sm text-gray-400">{dict.top.noneToday}</p>
+        <p className="mt-3 text-center text-sm text-gray-400">{emptyMessage ?? dict.top.noneToday}</p>
       ) : (
         <p className="mt-3 text-xs text-gray-400">
           {dict.gantt.rangeNote(

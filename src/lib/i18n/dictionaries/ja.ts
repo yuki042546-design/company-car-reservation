@@ -30,6 +30,7 @@ const ja = {
     viewCalendar: "カレンダー",
     viewGantt: "詳細な時間",
     calendarHint: "該当日をタップして予約に進みます。",
+    calendarHintSelected: "もう一度タップすると予約に進みます。",
     prevMonth: "前の月",
     nextMonth: "次の月",
   },

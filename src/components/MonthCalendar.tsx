@@ -9,6 +9,9 @@ interface MonthCalendarProps {
   nextMonthKey: string;
   todayKey: string; // "YYYY-MM-DD"
   reservationDateKeys: string[];
+  /** 選択中の日付（1回目のタップで選択、選択済みの日付を再度タップすると予約画面へ進む） */
+  selectedDateKey: string | null;
+  onDayTap: (dateKey: string) => void;
   dict: Dictionary;
   locale: Locale;
 }
@@ -40,6 +43,8 @@ export function MonthCalendar({
   nextMonthKey,
   todayKey,
   reservationDateKeys,
+  selectedDateKey,
+  onDayTap,
   dict,
   locale,
 }: MonthCalendarProps) {
@@ -49,7 +54,9 @@ export function MonthCalendar({
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <p className="mb-3 text-center text-sm text-gray-500">{dict.top.calendarHint}</p>
+      <p className="mb-3 text-center text-sm text-gray-500">
+        {selectedDateKey ? dict.top.calendarHintSelected : dict.top.calendarHint}
+      </p>
 
       <div className="mb-3 flex items-center justify-between">
         <Link
@@ -83,6 +90,7 @@ export function MonthCalendar({
 
           const isToday = cell.dateKey === todayKey;
           const isPast = cell.dateKey < todayKey;
+          const isSelected = cell.dateKey === selectedDateKey;
           const hasReservation = reservationDateSet.has(cell.dateKey);
 
           if (isPast) {
@@ -97,20 +105,25 @@ export function MonthCalendar({
           }
 
           return (
-            <Link
+            <button
               key={cell.dateKey}
-              href={`/reservations/new?date=${cell.dateKey}`}
+              type="button"
+              onClick={() => onDayTap(cell.dateKey)}
               className={
-                isToday
-                  ? "flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-brand-600 text-sm font-semibold text-brand-700 hover:bg-brand-50"
-                  : "flex aspect-square flex-col items-center justify-center rounded-lg text-sm text-gray-700 hover:bg-brand-50"
+                isSelected
+                  ? "flex aspect-square flex-col items-center justify-center rounded-lg bg-brand-600 text-sm font-semibold text-white shadow-sm"
+                  : isToday
+                    ? "flex aspect-square flex-col items-center justify-center rounded-lg border-2 border-brand-600 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+                    : "flex aspect-square flex-col items-center justify-center rounded-lg text-sm text-gray-700 hover:bg-brand-50"
               }
             >
               <span>{cell.day}</span>
               <span
-                className={`mt-0.5 h-1.5 w-1.5 rounded-full ${hasReservation ? "bg-brand-500" : "bg-transparent"}`}
+                className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
+                  hasReservation ? (isSelected ? "bg-white" : "bg-brand-500") : "bg-transparent"
+                }`}
               />
-            </Link>
+            </button>
           );
         })}
       </div>
