@@ -1,58 +1,39 @@
 import Link from "next/link";
-import { getReservationsInRange, getThisWeekReservations, getTodayReservations } from "@/lib/data";
-import { getJstDateKey, getMonthRangeJst, getThisWeekRangeJst, getTodayRangeJst, shiftMonthKey } from "@/lib/dateUtils";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
-import { TodayView } from "@/components/TodayView";
-import { TopScheduleToggle } from "@/components/TopScheduleToggle";
-import { WeekReservations } from "@/components/WeekReservations";
 
 export const dynamic = "force-dynamic";
 
-interface TopPageProps {
-  searchParams: { month?: string };
-}
-
-export default async function TopPage({ searchParams }: TopPageProps) {
-  const locale = getLocale();
-  const dict = getDictionary(locale);
-  const now = new Date();
-  const [today, week] = await Promise.all([getTodayReservations(), getThisWeekReservations()]);
-  const { start: weekStart } = getThisWeekRangeJst();
-  const { start: todayStart } = getTodayRangeJst();
-
-  const { start: monthStart, end: monthEnd, monthKey } = getMonthRangeJst(searchParams.month);
-  const monthReservations = await getReservationsInRange(monthStart, monthEnd);
+export default function CoverPage() {
+  const dict = getDictionary(getLocale());
 
   return (
-    <div className="space-y-8">
-      <section>
-        <TopScheduleToggle
-          calendar={{
-            monthKey,
-            prevMonthKey: shiftMonthKey(monthKey, -1),
-            nextMonthKey: shiftMonthKey(monthKey, 1),
-            todayKey: getJstDateKey(now.toISOString()),
-            monthReservations,
-          }}
-          gantt={{ todayReservations: today, todayStartIso: todayStart.toISOString(), nowIso: now.toISOString() }}
-        />
-      </section>
+    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-10 text-center">
+      <div>
+        <p className="text-2xl font-bold tracking-tight text-gray-900">豊桑産業</p>
+        <p className="mt-1 text-lg font-semibold tracking-tight text-gray-600">Car-Reservation System</p>
+      </div>
 
-      <section>
-        <h2 className="mb-3 text-lg font-bold tracking-tight text-gray-900">{dict.top.todayTitle}</h2>
-        <TodayView reservations={today} dict={dict} locale={locale} />
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold tracking-tight text-gray-900">{dict.top.weekTitle}</h2>
-          <Link href="/reservations" className="text-sm text-brand-600 hover:underline">
-            {dict.top.allReservationsLink}
-          </Link>
-        </div>
-        <WeekReservations reservations={week} weekStartIso={weekStart.toISOString()} locale={locale} dict={dict} />
-      </section>
+      <div className="flex w-full max-w-xs flex-col gap-3">
+        <Link
+          href="/home"
+          className="rounded-lg bg-brand-600 py-3.5 text-center text-base font-semibold text-white shadow hover:bg-brand-700"
+        >
+          {dict.cover.tabReservation}
+        </Link>
+        <Link
+          href="/admin"
+          className="rounded-lg border border-gray-300 bg-white py-3.5 text-center text-base font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          {dict.cover.tabAdmin}
+        </Link>
+        <Link
+          href="/guide"
+          className="rounded-lg border border-gray-300 bg-white py-3.5 text-center text-base font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          {dict.cover.tabGuide}
+        </Link>
+      </div>
     </div>
   );
 }

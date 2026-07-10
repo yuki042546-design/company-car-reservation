@@ -22,6 +22,29 @@ const vi: Dictionary = {
   languageSwitcher: {
     label: "Ngôn ngữ",
   },
+  cover: {
+    tabReservation: "Đặt xe công ty",
+    tabAdmin: "Quản trị",
+    tabGuide: "Hướng dẫn sử dụng",
+  },
+  guide: {
+    pageTitle: "Hướng dẫn sử dụng",
+    intro: "Bạn có thể đặt xe và kiểm tra lịch đặt xe bất cứ lúc nào từ điện thoại hoặc máy tính. Vui lòng tham khảo các bước dưới đây.",
+    step1Title: "① Đặt xe",
+    step1Body:
+      "Ở màn hình \"Đặt xe công ty\", chạm vào một ngày trên lịch để chọn, rồi chạm lại một lần nữa để chuyển sang màn hình nhập thông tin đặt xe. Hãy nhập người sử dụng, thời gian bắt đầu/kết thúc, điểm đến và mục đích rồi đăng ký.",
+    step2Title: "② Xem lịch đặt xe",
+    step2Body:
+      "Chuyển đổi giữa \"Lịch\" và \"Thời gian chi tiết\" để xem lịch đặt xe theo từng ngày. Phía dưới màn hình cũng hiển thị danh sách lịch đặt xe hôm nay và tuần này.",
+    step3Title: "③ Sửa hoặc xóa lịch đặt xe",
+    step3Body:
+      "Bạn có thể chỉnh sửa nội dung từ nút \"Sửa\" trên thẻ đặt xe. Chỉ người đã đặt mới có thể xóa (chọn tên để xác nhận). Quản trị viên có thể xóa bất kỳ lịch đặt xe nào.",
+    step4Title: "④ Chuyển đổi ngôn ngữ",
+    step4Body: "Dùng nút \"JP\"/\"VN\" ở góc trên bên phải màn hình để chuyển đổi giữa tiếng Nhật và tiếng Việt.",
+    step5Title: "⑤ Chức năng quản trị",
+    step5Body:
+      "Trang quản trị cho phép sửa/xóa tất cả lịch đặt xe, quản lý danh sách nhân viên, và xem lịch sử thao tác (đặt xe, sửa, xóa) sau khi đăng nhập bằng mật khẩu quản trị viên.",
+  },
   top: {
     todayTitle: "Lịch đặt xe hôm nay",
     weekTitle: "Lịch đặt xe tuần này",

@@ -60,7 +60,7 @@ export function MonthCalendar({
 
       <div className="mb-3 flex items-center justify-between">
         <Link
-          href={`/?month=${prevMonthKey}`}
+          href={`/home?month=${prevMonthKey}`}
           className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
           aria-label={dict.top.prevMonth}
         >
@@ -68,7 +68,7 @@ export function MonthCalendar({
         </Link>
         <h3 className="text-base font-bold tracking-tight text-gray-900">{formatMonthLabel(monthKey, locale)}</h3>
         <Link
-          href={`/?month=${nextMonthKey}`}
+          href={`/home?month=${nextMonthKey}`}
           className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
           aria-label={dict.top.nextMonth}
         >

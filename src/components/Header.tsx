@@ -1,17 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useI18n } from "./LocaleProvider";
 
 export function Header() {
   const { dict } = useI18n();
+  const pathname = usePathname();
+
+  // 表紙ページ（"/"）は独立したタイトル画面のため、通常のヘッダーは表示しない。
+  if (pathname === "/") {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-4">
         <Link
-          href="/"
+          href="/home"
           className="flex min-w-0 shrink items-center gap-2 text-[14px] font-bold tracking-tight text-gray-900 sm:gap-2.5 sm:text-[15px]"
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">

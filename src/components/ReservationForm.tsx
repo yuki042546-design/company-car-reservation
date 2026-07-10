@@ -118,7 +118,7 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
         return;
       }
 
-      router.push("/");
+      router.push("/home");
       router.refresh();
     } catch {
       setErrors([dict.form.networkError]);
