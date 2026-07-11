@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapEmployeeRow, type EmployeeRow } from "@/lib/mappers";
-import { isAdminRequest } from "@/lib/requireAdmin";
+import { requireApiRole, requireApiUser } from "@/lib/auth";
 import { validateNewEmployeeInput } from "@/lib/employeeRules";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -9,10 +9,14 @@ import { getLocale } from "@/lib/i18n/getLocale";
 export const runtime = "nodejs";
 
 // GET /api/employees?all=1
-// デフォルトでは有効な社員のみ返す（予約フォームのプルダウン用）。
+// ログイン済みの社員なら誰でも閲覧可（予約フォームのプルダウン用）。
 // all=1 を付けると管理者画面用に無効化された社員も含めて全件返す。
 export async function GET(request: NextRequest) {
   const dict = getDictionary(getLocale());
+
+  const auth = await requireApiUser(dict);
+  if (auth.error) return auth.error;
+
   const supabase = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
   const includeInactive = searchParams.get("all") === "1";
@@ -31,13 +35,14 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ employees });
 }
 
-// POST /api/employees - 社員追加（管理者のみ）
+// POST /api/employees - 社員追加（vehicle_manager以上のみ）
 export async function POST(request: NextRequest) {
   const dict = getDictionary(getLocale());
 
-  if (!isAdminRequest()) {
-    return NextResponse.json({ errors: [dict.apiErrors.adminOnly] }, { status: 401 });
-  }
+  const auth = await requireApiUser(dict);
+  if (auth.error) return auth.error;
+  const roleError = requireApiRole(auth.user, "vehicle_manager", dict);
+  if (roleError) return roleError;
 
   let body: { name?: string; department?: string | null; age?: number | null };
   try {

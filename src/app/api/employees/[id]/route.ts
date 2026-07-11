@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapEmployeeRow, type EmployeeRow } from "@/lib/mappers";
-import { isAdminRequest } from "@/lib/requireAdmin";
+import { requireApiRole, requireApiUser } from "@/lib/auth";
 import { isValidAge, isValidDepartment, MAX_AGE, MIN_AGE } from "@/lib/employeeRules";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -12,15 +12,16 @@ interface RouteParams {
   params: { id: string };
 }
 
-// PATCH /api/employees/[id] - 社員名・所属部署・年齢の変更、有効/無効の切り替え（管理者のみ）
+// PATCH /api/employees/[id] - 社員名・所属部署・年齢の変更、有効/無効の切り替え（vehicle_manager以上のみ）
 // 予約済みの過去データを保持するため、削除ではなく is_active フラグで
 // 選択肢から外す方式にしている。
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const dict = getDictionary(getLocale());
 
-  if (!isAdminRequest()) {
-    return NextResponse.json({ errors: [dict.apiErrors.adminOnly] }, { status: 401 });
-  }
+  const auth = await requireApiUser(dict);
+  if (auth.error) return auth.error;
+  const roleError = requireApiRole(auth.user, "vehicle_manager", dict);
+  if (roleError) return roleError;
 
   let body: { name?: string; isActive?: boolean; department?: string | null; age?: number | null };
   try {

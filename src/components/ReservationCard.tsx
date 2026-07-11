@@ -13,10 +13,19 @@ interface ReservationCardProps {
   rightSlot?: React.ReactNode;
 }
 
+const STATUS_BADGE_CLASSES: Record<string, string> = {
+  in_use: "bg-amber-50 text-amber-700",
+  completed: "bg-gray-100 text-gray-500",
+  cancelled: "bg-gray-100 text-gray-400 line-through",
+  no_show: "bg-danger-soft text-danger",
+  overdue: "bg-danger-soft text-danger",
+};
+
 export function ReservationCard({ reservation, dict, locale, showEditLink = true, rightSlot }: ReservationCardProps) {
   const isTranslatedDestination =
     reservation.inputLocale !== locale && reservation.destinationTranslated !== null;
   const isTranslatedPurpose = reservation.inputLocale !== locale && reservation.purposeTranslated !== null;
+  const statusLabel = dict.vehicleStatus.statusLabels[reservation.status];
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -29,6 +38,15 @@ export function ReservationCard({ reservation, dict, locale, showEditLink = true
             <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-sm font-medium text-brand-600">
               {reservation.employeeName}
             </span>
+            {reservation.status !== "reserved" && statusLabel && (
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  STATUS_BADGE_CLASSES[reservation.status] ?? "bg-gray-100 text-gray-500"
+                }`}
+              >
+                {statusLabel}
+              </span>
+            )}
           </div>
           <p className="mt-1 truncate text-sm text-gray-700">
             <span className="text-gray-500">{dict.reservationCard.destination}: </span>

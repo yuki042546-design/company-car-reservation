@@ -103,6 +103,7 @@ export function EmployeeCombobox({ id, employees, value, onChange, required }: E
         type="text"
         role="combobox"
         aria-expanded={open}
+        aria-controls={`${id}-listbox`}
         aria-autocomplete="list"
         autoComplete="off"
         value={query}
@@ -128,7 +129,11 @@ export function EmployeeCombobox({ id, employees, value, onChange, required }: E
         ▾
       </span>
       {open && (
-        <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+        <ul
+          id={`${id}-listbox`}
+          role="listbox"
+          className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+        >
           {options.length === 0 && (
             <li className="px-3 py-2 text-sm text-gray-400">{dict.form.noMatchingEmployee}</li>
           )}

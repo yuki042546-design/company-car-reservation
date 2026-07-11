@@ -2,10 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { AppUser } from "@/lib/types";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { LogoutButton } from "./LogoutButton";
 import { useI18n } from "./LocaleProvider";
 
-export function Header() {
+interface HeaderProps {
+  currentUser: AppUser | null;
+}
+
+export function Header({ currentUser }: HeaderProps) {
   const { dict } = useI18n();
   const pathname = usePathname();
 
@@ -13,6 +19,8 @@ export function Header() {
   if (pathname === "/") {
     return null;
   }
+
+  const isManager = currentUser?.role === "vehicle_manager" || currentUser?.role === "system_admin";
 
   return (
     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
@@ -40,21 +48,31 @@ export function Header() {
             </span>
             <span className="truncate">{dict.nav.appName}</span>
           </Link>
-          <LanguageSwitcher />
+          <div className="flex shrink-0 items-center gap-2">
+            <LanguageSwitcher />
+            {currentUser && <LogoutButton />}
+          </div>
         </div>
-        <nav className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] font-semibold sm:gap-x-5 sm:text-[13px]">
+        <nav className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] font-semibold sm:gap-x-5 sm:text-[13px]">
           <Link href="/" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
             {dict.nav.top}
           </Link>
           <Link href="/reservations" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
             {dict.nav.reservations}
           </Link>
-          <Link href="/admin" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
-            {dict.nav.admin}
-          </Link>
+          {isManager && (
+            <Link href="/admin" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
+              {dict.nav.admin}
+            </Link>
+          )}
           <Link href="/guide" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
             {dict.nav.guide}
           </Link>
+          {currentUser && (
+            <span className="ml-auto truncate text-[11px] font-normal text-gray-400">
+              {currentUser.displayName}
+            </span>
+          )}
         </nav>
       </div>
     </header>

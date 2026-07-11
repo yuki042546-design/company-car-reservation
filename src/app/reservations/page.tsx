@@ -1,4 +1,6 @@
-import { getAllReservations } from "@/lib/data";
+import Link from "next/link";
+import { requirePageUser } from "@/lib/auth";
+import { getFilteredReservations, type ReservationListTab } from "@/lib/data";
 import { formatDate, isSameJstDate } from "@/lib/dateUtils";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -7,10 +9,30 @@ import { SelfDeleteButton } from "@/components/SelfDeleteButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function AllReservationsPage() {
+const TABS: ReservationListTab[] = ["self", "today", "upcoming", "in_use", "past", "cancelled"];
+
+interface AllReservationsPageProps {
+  searchParams: { tab?: string; page?: string };
+}
+
+function isValidTab(value: string | undefined): value is ReservationListTab {
+  return !!value && (TABS as string[]).includes(value);
+}
+
+export default async function AllReservationsPage({ searchParams }: AllReservationsPageProps) {
+  const currentUser = await requirePageUser();
   const locale = getLocale();
   const dict = getDictionary(locale);
-  const reservations = await getAllReservations();
+
+  // 通常社員の初期表示は「自分の予約」。他のタブへはヘッダー下のタブから切り替える。
+  const tab: ReservationListTab = isValidTab(searchParams.tab) ? searchParams.tab : "self";
+  const page = Math.max(1, Number(searchParams.page) || 1);
+
+  const { reservations, hasMore } = await getFilteredReservations({
+    tab,
+    ownerUserId: currentUser.id,
+    page,
+  });
 
   // 日付ごとにグループ化して表示する
   const groups: { dateIso: string; items: typeof reservations }[] = [];
@@ -25,7 +47,24 @@ export default async function AllReservationsPage() {
 
   return (
     <div>
-      <h1 className="mb-5 text-xl font-bold tracking-tight text-gray-900">{dict.reservationsPage.title}</h1>
+      <h1 className="mb-4 text-xl font-bold tracking-tight text-gray-900">{dict.reservationsPage.title}</h1>
+
+      <div className="mb-5 flex flex-wrap gap-1.5">
+        {TABS.map((t) => (
+          <Link
+            key={t}
+            href={`/reservations?tab=${t}`}
+            className={
+              t === tab
+                ? "rounded-full bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white"
+                : "rounded-full border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+            }
+          >
+            {dict.reservationsPage.tabs[t]}
+          </Link>
+        ))}
+      </div>
+
       {groups.length === 0 ? (
         <p className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-4 text-sm text-gray-400">
           {dict.reservationsPage.empty}
@@ -48,6 +87,17 @@ export default async function AllReservationsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {hasMore && (
+        <div className="mt-6 text-center">
+          <Link
+            href={`/reservations?tab=${tab}&page=${page + 1}`}
+            className="inline-block rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            {dict.reservationsPage.loadMore}
+          </Link>
         </div>
       )}
     </div>

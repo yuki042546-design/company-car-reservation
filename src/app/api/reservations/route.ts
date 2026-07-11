@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapReservationRow, type ReservationRow } from "@/lib/mappers";
-import { validateReservationInput } from "@/lib/reservationRules";
-import { hasOverlappingReservation, isExclusionViolation } from "@/lib/overlapCheck";
+import { limitsFromAppSettings, validateReservationInput } from "@/lib/reservationRules";
+import { isExclusionViolation } from "@/lib/overlapCheck";
+import { requireApiUser, roleAtLeast } from "@/lib/auth";
+import { getAppSettings } from "@/lib/data";
+import { getDefaultVehicle } from "@/lib/vehicles";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { translateReservationFields } from "@/lib/translate";
 import { logReservationAction } from "@/lib/reservationLogs";
+import { writeAuditLog } from "@/lib/auditLog";
+import { enqueueNotification } from "@/lib/notifications/outbox";
 import type { ReservationInput } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -14,8 +19,13 @@ export const runtime = "nodejs";
 // GET /api/reservations?from=ISO&to=ISO
 // from/to を省略すると全予約を返す（全予約一覧用）。
 // 指定すると、その範囲と重なる予約のみ返す（今日/今週の予約用）。
+// ログイン済みの社員なら誰でも閲覧できる（社内共有カレンダーのため）。
 export async function GET(request: NextRequest) {
   const dict = getDictionary(getLocale());
+
+  const auth = await requireApiUser(dict);
+  if (auth.error) return auth.error;
+
   const supabase = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
@@ -37,8 +47,20 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/reservations - 新規予約登録
+// 所有者は原則ログイン中の本人（owner_user_id = 自分）。vehicle_manager/system_admin は
+// onBehalfOfUserId を指定して代理予約できる。重複判定・整備期間チェック・INSERTは
+// create_reservation_tx RPC 内でアドバイザリーロックを使いアトミックに行う。
 export async function POST(request: NextRequest) {
   const dict = getDictionary(getLocale());
+
+  const auth = await requireApiUser(dict);
+  if (auth.error) return auth.error;
+  const currentUser = auth.user;
+
+  if (!currentUser.driverEligible) {
+    return NextResponse.json({ errors: [dict.validation.userNotDriverEligible] }, { status: 403 });
+  }
+
   const supabase = getSupabaseAdmin();
 
   let body: ReservationInput;
@@ -48,47 +70,63 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ errors: [dict.apiErrors.invalidRequestBody] }, { status: 400 });
   }
 
-  const validation = validateReservationInput(body, dict);
+  const isManager = roleAtLeast(currentUser.role, "vehicle_manager");
+  const ownerUserId = isManager && body.onBehalfOfUserId ? body.onBehalfOfUserId : currentUser.id;
+
+  const settings = await getAppSettings();
+  const limits = limitsFromAppSettings(settings, isManager);
+
+  const validation = validateReservationInput(body, dict, new Date(), limits);
   if (!validation.valid) {
     return NextResponse.json({ errors: validation.errors }, { status: 400 });
+  }
+
+  const vehicle = await getDefaultVehicle();
+  if (!vehicle) {
+    return NextResponse.json({ errors: [dict.validation.vehicleInactive] }, { status: 500 });
+  }
+  if (!vehicle.active) {
+    return NextResponse.json({ errors: [dict.validation.vehicleInactive] }, { status: 409 });
   }
 
   const start = new Date(body.startTime);
   const end = new Date(body.endTime);
 
   try {
-    const overlapping = await hasOverlappingReservation(supabase, start, end);
-    if (overlapping) {
-      return NextResponse.json({ errors: [dict.validation.overlap] }, { status: 409 });
-    }
-
     const { inputLocale, destinationTranslated, purposeTranslated } = await translateReservationFields(
       body.destination,
       body.purpose
     );
 
     const { data, error } = await supabase
-      .from("reservations")
-      .insert({
-        employee_name: body.employeeName,
-        start_time: start.toISOString(),
-        end_time: end.toISOString(),
-        destination: body.destination,
-        purpose: body.purpose,
-        note: body.note ?? null,
-        input_locale: inputLocale,
-        destination_translated: destinationTranslated,
-        purpose_translated: purposeTranslated,
+      .rpc("create_reservation_tx", {
+        p_vehicle_id: vehicle.id,
+        p_owner_user_id: ownerUserId,
+        p_created_by_user_id: currentUser.id,
+        p_employee_name: body.employeeName,
+        p_start_time: start.toISOString(),
+        p_end_time: end.toISOString(),
+        p_destination: body.destination,
+        p_purpose: body.purpose,
+        p_note: body.note ?? null,
+        p_input_locale: inputLocale,
+        p_destination_translated: destinationTranslated,
+        p_purpose_translated: purposeTranslated,
+        p_idempotency_key: body.idempotencyKey ?? null,
       })
-      .select("*")
       .single();
 
     if (error) {
       if (isExclusionViolation(error)) {
         return NextResponse.json({ errors: [dict.validation.overlap] }, { status: 409 });
       }
+      if (error.message?.includes("maintenance_conflict")) {
+        return NextResponse.json({ errors: [dict.validation.maintenanceConflict] }, { status: 409 });
+      }
       throw error;
     }
+
+    const reservation = mapReservationRow(data as ReservationRow);
 
     await logReservationAction(supabase, "create", {
       employeeName: body.employeeName,
@@ -96,8 +134,24 @@ export async function POST(request: NextRequest) {
       endTime: end.toISOString(),
       destination: body.destination,
     });
+    await writeAuditLog(supabase, {
+      actorUserId: currentUser.id,
+      actorEmail: currentUser.email,
+      action: "reservation_create",
+      targetType: "reservation",
+      targetId: reservation.id,
+      afterData: reservation,
+    });
+    await enqueueNotification(supabase, {
+      eventType: "reservation_created",
+      targetUserId: ownerUserId,
+      targetType: "reservation",
+      targetId: reservation.id,
+      data: { startTime: reservation.startTime, endTime: reservation.endTime, destination: reservation.destination },
+      idempotencyKey: `reservation_created:${reservation.id}`,
+    });
 
-    return NextResponse.json({ reservation: mapReservationRow(data as ReservationRow) }, { status: 201 });
+    return NextResponse.json({ reservation }, { status: 201 });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ errors: [dict.apiErrors.createFailed] }, { status: 500 });

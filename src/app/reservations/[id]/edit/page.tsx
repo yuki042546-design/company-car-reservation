@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { requirePageUser } from "@/lib/auth";
 import { getActiveEmployees, getReservationById } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -11,6 +12,7 @@ interface EditReservationPageProps {
 }
 
 export default async function EditReservationPage({ params }: EditReservationPageProps) {
+  await requirePageUser();
   const [reservation, employees] = await Promise.all([
     getReservationById(params.id),
     getActiveEmployees(),

@@ -173,6 +173,20 @@ export function nextSlotDatetimeLocal(now: Date = new Date()): string {
   return isoToDatetimeLocal(rounded.toISOString());
 }
 
+/** datetime-local value に分数を加算した datetime-local value を返す（利用時間プルダウンの終了時刻計算用） */
+export function addMinutesToDatetimeLocal(value: string, minutes: number): string {
+  const start = new Date(datetimeLocalToIso(value));
+  const end = new Date(start.getTime() + minutes * 60 * 1000);
+  return isoToDatetimeLocal(end.toISOString());
+}
+
+/** 2つの datetime-local value の差（分）を返す（終了時刻から利用時間プルダウンの初期選択を決めるため） */
+export function minutesBetweenDatetimeLocal(startValue: string, endValue: string): number {
+  const start = new Date(datetimeLocalToIso(startValue));
+  const end = new Date(datetimeLocalToIso(endValue));
+  return Math.round((end.getTime() - start.getTime()) / 60000);
+}
+
 /** "00:00" から "23:30" までの30分刻みの時刻文字列一覧（時刻プルダウン用） */
 export const TIME_SLOT_OPTIONS: string[] = Array.from({ length: 48 }, (_, i) => {
   const hour = Math.floor(i / 2);

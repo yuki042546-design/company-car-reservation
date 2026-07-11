@@ -1,9 +1,12 @@
 import type { Dictionary } from "./i18n/dictionary";
-import type { ReservationInput } from "./types";
+import type { AppSettings, ReservationInput } from "./types";
 
 export const SLOT_MINUTES = 30;
-export const MIN_DURATION_MINUTES = 30;
-export const MAX_DURATION_MINUTES = 240; // 4時間
+// 以下はDB/管理設定が取得できない場合のフォールバック値。
+// 実際の上限は system_admin が管理画面（app_settings）で変更できる。
+export const DEFAULT_MIN_DURATION_MINUTES = 30;
+export const DEFAULT_MAX_DURATION_MINUTES = 240; // 4時間
+export const DEFAULT_BOOKING_HORIZON_DAYS = 90;
 
 export interface ValidationResult {
   valid: boolean;
@@ -14,17 +17,38 @@ function isOnSlotBoundary(date: Date): boolean {
   return date.getSeconds() === 0 && date.getMilliseconds() === 0 && date.getMinutes() % SLOT_MINUTES === 0;
 }
 
+export interface ReservationRuleLimits {
+  minDurationMinutes: number;
+  maxDurationMinutes: number;
+  bookingHorizonDays: number;
+}
+
+/** app_settings から検証ルールの上限値を取り出す（isManager なら manager 用の上限を使う）。 */
+export function limitsFromAppSettings(settings: AppSettings, isManager: boolean): ReservationRuleLimits {
+  return {
+    minDurationMinutes: settings.minimumDurationMinutes,
+    maxDurationMinutes: isManager ? settings.managerMaxDurationMinutes : settings.normalMaxDurationMinutes,
+    bookingHorizonDays: settings.bookingHorizonDays,
+  };
+}
+
+const DEFAULT_LIMITS: ReservationRuleLimits = {
+  minDurationMinutes: DEFAULT_MIN_DURATION_MINUTES,
+  maxDurationMinutes: DEFAULT_MAX_DURATION_MINUTES,
+  bookingHorizonDays: DEFAULT_BOOKING_HORIZON_DAYS,
+};
+
 /**
- * 予約内容の入力チェック（必須項目・30分単位・過去日時・使用時間の上限下限）。
+ * 予約内容の入力チェック（必須項目・30分単位・過去日時・使用時間の上限下限・予約可能期間）。
  * サーバー（API ルート）とクライアント（フォーム）の両方から呼ばれる、
  * このアプリの「予約時間のルール」の唯一の実装。
- * エラーメッセージは dict（言語ごとの辞書）から取得するため、
- * 呼び出し側は現在の言語設定に応じた dict を渡す。
+ * 上限値は app_settings から取得した limits を渡す（省略時はコード内の既定値）。
  */
 export function validateReservationInput(
   input: ReservationInput,
   dict: Dictionary,
-  now: Date = new Date()
+  now: Date = new Date(),
+  limits: ReservationRuleLimits = DEFAULT_LIMITS
 ): ValidationResult {
   const errors: string[] = [];
   const v = dict.validation;
@@ -34,6 +58,11 @@ export function validateReservationInput(
   if (!input.purpose?.trim()) errors.push(v.purposeRequired);
   if (!input.startTime) errors.push(v.startTimeRequired);
   if (!input.endTime) errors.push(v.endTimeRequired);
+
+  // 文字数制限（過剰な入力サイズ・意図しないHTML/スクリプト混入への防御の一環）。
+  if (input.destination && input.destination.length > 200) errors.push(v.destinationTooLong);
+  if (input.purpose && input.purpose.length > 200) errors.push(v.purposeTooLong);
+  if (input.note && input.note.length > 1000) errors.push(v.noteTooLong);
 
   if (errors.length > 0) {
     return { valid: false, errors };
@@ -57,14 +86,19 @@ export function validateReservationInput(
     errors.push(v.pastDateTime);
   }
 
+  const horizonMs = limits.bookingHorizonDays * 24 * 60 * 60 * 1000;
+  if (start.getTime() > now.getTime() + horizonMs) {
+    errors.push(v.beyondBookingHorizon(limits.bookingHorizonDays));
+  }
+
   if (end.getTime() <= start.getTime()) {
     errors.push(v.endBeforeStart);
   } else {
     const durationMinutes = (end.getTime() - start.getTime()) / 60000;
-    if (durationMinutes < MIN_DURATION_MINUTES) {
+    if (durationMinutes < limits.minDurationMinutes) {
       errors.push(v.tooShort);
     }
-    if (durationMinutes > MAX_DURATION_MINUTES) {
+    if (durationMinutes > limits.maxDurationMinutes) {
       errors.push(v.tooLong);
     }
   }
@@ -73,11 +107,9 @@ export function validateReservationInput(
 }
 
 /**
- * 予約重複チェック。
- *
+ * 予約重複チェック（純粋関数版。単体テスト・将来のクライアント側プレビュー表示に使う）。
  * 「新しい予約の開始時刻 < 既存予約の終了時刻」かつ
  * 「新しい予約の終了時刻 > 既存予約の開始時刻」であれば重複とみなす。
- * （区間の端がぴったり接する場合＝ 11:00終了 と 11:00開始 は重複扱いにしない）
  */
 export function isOverlapping(
   newStart: Date,

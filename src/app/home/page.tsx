@@ -1,11 +1,20 @@
 import Link from "next/link";
-import { getReservationsInRange, getThisWeekReservations, getTodayReservations } from "@/lib/data";
+import { requirePageUser, roleAtLeast } from "@/lib/auth";
+import {
+  getCurrentUsageReservation,
+  getNextReservation,
+  getReservationsInRange,
+  getThisWeekReservations,
+  getTodayReservations,
+} from "@/lib/data";
 import { getJstDateKey, getMonthRangeJst, getThisWeekRangeJst, getTodayRangeJst, shiftMonthKey } from "@/lib/dateUtils";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
+import { getDefaultVehicle } from "@/lib/vehicles";
 import { SectionHeading } from "@/components/SectionHeading";
 import { TodayView } from "@/components/TodayView";
 import { TopScheduleToggle } from "@/components/TopScheduleToggle";
+import { VehicleStatusBanner } from "@/components/VehicleStatusBanner";
 import { WeekReservations } from "@/components/WeekReservations";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +34,7 @@ const iconStrokeProps = {
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
+  const currentUser = await requirePageUser();
   const locale = getLocale();
   const dict = getDictionary(locale);
   const now = new Date();
@@ -35,8 +45,23 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const { start: monthStart, end: monthEnd, monthKey } = getMonthRangeJst(searchParams.month);
   const monthReservations = await getReservationsInRange(monthStart, monthEnd);
 
+  const vehicle = await getDefaultVehicle();
+  const [currentUsage, nextReservation] = vehicle
+    ? await Promise.all([getCurrentUsageReservation(vehicle.id), getNextReservation(vehicle.id, now)])
+    : [null, null];
+
   return (
     <div className="space-y-8">
+      {vehicle && (
+        <VehicleStatusBanner
+          vehicle={vehicle}
+          currentUsage={currentUsage}
+          nextReservation={nextReservation}
+          currentUserId={currentUser.id}
+          isManager={roleAtLeast(currentUser.role, "vehicle_manager")}
+        />
+      )}
+
       <section>
         <SectionHeading
           color="brand"

@@ -4,16 +4,34 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Employee, Reservation } from "@/lib/types";
 import {
+  addMinutesToDatetimeLocal,
   combineDatetimeLocal,
   datetimeLocalToIso,
   isoToDatetimeLocal,
+  minutesBetweenDatetimeLocal,
   nextSlotDatetimeLocal,
   splitDatetimeLocal,
 } from "@/lib/dateUtils";
 import { validateReservationInput } from "@/lib/reservationRules";
 import { DateTimeSelect } from "./DateTimeSelect";
+import { DurationSelect, type DurationValue } from "./DurationSelect";
 import { EmployeeCombobox } from "./EmployeeCombobox";
 import { useI18n } from "./LocaleProvider";
+
+// 「利用時間」プルダウンの選択肢（分）。これ以外の利用時間（管理者向けの
+// 長時間利用や、移行前の変則的な予約の編集など）は「その他」で終了日時を直接指定する。
+const PRESET_DURATION_MINUTES = [30, 60, 120, 180, 240];
+
+function computeInitialDuration(startIso: string, endIso: string): DurationValue {
+  const minutes = minutesBetweenDatetimeLocal(isoToDatetimeLocal(startIso), isoToDatetimeLocal(endIso));
+  return PRESET_DURATION_MINUTES.includes(minutes) ? minutes : "custom";
+}
+
+function formatDatetimeLocalDisplay(value: string): string {
+  const { date, time } = splitDatetimeLocal(value);
+  const [, month, day] = date.split("-");
+  return month && day ? `${Number(month)}/${Number(day)} ${time}` : value;
+}
 
 interface ReservationFormProps {
   employees: Employee[];
@@ -68,9 +86,13 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
   const [startTime, setStartTime] = useState(
     initial ? isoToDatetimeLocal(initial.startTime) : defaultStart(initialDate)
   );
-  const [endTime, setEndTime] = useState(
+  const [duration, setDuration] = useState<DurationValue>(
+    initial ? computeInitialDuration(initial.startTime, initial.endTime) : 60
+  );
+  const [customEndTime, setCustomEndTime] = useState(
     initial ? isoToDatetimeLocal(initial.endTime) : defaultEnd(defaultStart(initialDate))
   );
+  const endTime = duration === "custom" ? customEndTime : addMinutesToDatetimeLocal(startTime, duration);
   const [destination, setDestination] = useState(initial?.destination ?? "");
   const [purpose, setPurpose] = useState(initial?.purpose ?? "");
   const [note, setNote] = useState(initial?.note ?? "");
@@ -166,14 +188,36 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
         required
       />
 
-      <DateTimeSelect
-        id="endTime"
-        label={dict.form.endTime}
-        value={endTime}
-        onChange={setEndTime}
+      <DurationSelect
+        id="duration"
+        label={dict.form.durationLabel}
+        value={duration}
+        onChange={(next) => {
+          if (next === "custom") {
+            setCustomEndTime(endTime);
+          }
+          setDuration(next);
+        }}
+        options={PRESET_DURATION_MINUTES}
+        customLabel={dict.form.durationCustom}
         required
-        helperText={dict.form.durationHelp}
       />
+
+      {duration === "custom" ? (
+        <DateTimeSelect
+          id="endTime"
+          label={dict.form.endTime}
+          value={customEndTime}
+          onChange={setCustomEndTime}
+          required
+          helperText={dict.form.durationHelp}
+        />
+      ) : (
+        <p className="text-sm text-gray-600">
+          {dict.form.expectedEndLabel}:{" "}
+          <span className="font-semibold text-gray-900">{formatDatetimeLocalDisplay(endTime)}</span>
+        </p>
+      )}
 
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="destination">
