@@ -62,7 +62,8 @@ export async function POST(request: NextRequest) {
 
   const supabase = getSupabaseAdmin();
 
-  const { data: invited, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email);
+  const redirectTo = `${request.nextUrl.origin}/auth/set-password`;
+  const { data: invited, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, { redirectTo });
   if (inviteError || !invited?.user) {
     return NextResponse.json({ errors: [dict.apiErrors.inviteFailed] }, { status: 500 });
   }
