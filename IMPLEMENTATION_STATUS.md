@@ -176,7 +176,7 @@ erDiagram
 ## 4. 外部認証情報待ちの機能
 
 - **Microsoft Teams通知の実配信**: 社内で利用中のサービスとして決定済み。`src/lib/notifications/providers/teamsProvider.ts`を実装済みだが、実際のIncoming Webhook URL（`TEAMS_WEBHOOK_URL`）が無いため送信テストは未実施。TeamsチームがPower Automateフロー方式に移行済みの場合、ペイロード形式の調整が必要な可能性がある（コード内コメント参照）。
-- **Vercel Cron**: `vercel.json`で15分毎の設定を用意済みだが、実際のVercelプロジェクトへのデプロイ・`CRON_SECRET`設定が必要。
+- **Vercel Cron**: `vercel.json`で1日1回（`0 0 * * *`）の設定を用意済み（HobbyプランはCronが1日1回までのため。より高頻度にするにはProプランへのアップグレード、または外部cronサービスからのHTTP呼び出しへの切り替えが必要）。`CRON_SECRET`の設定が必要。
 
 ---
 
