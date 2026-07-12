@@ -1,6 +1,5 @@
 import {
   getAllEmployees,
-  getAllUsers,
   getAuditLogs,
   getMaintenanceBlocks,
   getRecentReservations,
@@ -8,23 +7,32 @@ import {
 } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
-import { requirePageRole } from "@/lib/auth";
+import { isAdminRequest } from "@/lib/requireAdmin";
 import { getDefaultVehicle } from "@/lib/vehicles";
 import { AdminAuditLog } from "@/components/AdminAuditLog";
+import { AdminLoginForm } from "@/components/AdminLoginForm";
+import { AdminLogoutButton } from "@/components/AdminLogoutButton";
 import { AdminMaintenanceManager } from "@/components/AdminMaintenanceManager";
 import { AdminOperationHistory } from "@/components/AdminOperationHistory";
 import { AdminReservationList } from "@/components/AdminReservationList";
 import { EmployeeManager } from "@/components/EmployeeManager";
-import { LogoutButton } from "@/components/LogoutButton";
-import { UserManager } from "@/components/UserManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  // vehicle_manager 以上のみアクセス可能（未ログイン・権限不足はここでリダイレクトされる）。
-  const currentUser = await requirePageRole("vehicle_manager");
+  const dict = getDictionary(getLocale());
+  const isAdmin = isAdminRequest();
+
+  if (!isAdmin) {
+    return (
+      <div>
+        <h1 className="mb-5 text-xl font-bold tracking-tight text-gray-900">{dict.admin.pageTitle}</h1>
+        <AdminLoginForm />
+      </div>
+    );
+  }
+
   const locale = getLocale();
-  const dict = getDictionary(locale);
 
   const [reservations, employees, logs, auditLogs, maintenanceBlocks, vehicle] = await Promise.all([
     getRecentReservations(),
@@ -39,7 +47,7 @@ export default async function AdminPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold tracking-tight text-gray-900">{dict.admin.pageTitle}</h1>
-        <LogoutButton />
+        <AdminLogoutButton />
       </div>
 
       <section>
@@ -56,13 +64,6 @@ export default async function AdminPage() {
         <section>
           <h2 className="mb-3 text-lg font-bold tracking-tight text-gray-900">{dict.maintenance.sectionTitle}</h2>
           <AdminMaintenanceManager vehicleId={vehicle.id} blocks={maintenanceBlocks} />
-        </section>
-      )}
-
-      {currentUser.role === "system_admin" && (
-        <section>
-          <h2 className="mb-3 text-lg font-bold tracking-tight text-gray-900">{dict.admin.usersSectionTitle}</h2>
-          <UserManager users={await getAllUsers()} />
         </section>
       )}
 

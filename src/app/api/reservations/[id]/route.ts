@@ -5,7 +5,7 @@ import { limitsFromAppSettings, validateReservationInput } from "@/lib/reservati
 import { isExclusionViolation } from "@/lib/overlapCheck";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
-import { requireApiUser, roleAtLeast } from "@/lib/auth";
+import { isAdminRequest } from "@/lib/requireAdmin";
 import { getAppSettings } from "@/lib/data";
 import { translateReservationFields } from "@/lib/translate";
 import { logReservationAction } from "@/lib/reservationLogs";
@@ -22,9 +22,6 @@ interface RouteParams {
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   const dict = getDictionary(getLocale());
 
-  const auth = await requireApiUser(dict);
-  if (auth.error) return auth.error;
-
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase.from("reservations").select("*").eq("id", params.id).maybeSingle();
 
@@ -39,22 +36,19 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 }
 
 // PUT /api/reservations/[id] - 予約内容の変更
-// - 本人（owner_user_id一致）は、開始前（status='reserved'）の自分の予約のみ変更できる。
-// - vehicle_manager以上は、開始後の予約も「訂正」として変更できるが、reason（訂正理由）が必須。
-//   訂正内容は監査ログへ変更前後を記録する。
-// - owner_user_id が未割当（移行前のレガシー予約）の場合は、本人確認の手段がないため
-//   vehicle_manager以上のみ編集・割当を行える。
+// ログイン機能がないため、本人確認は使用者名の自己申告一致で行う。
+// - 予約時の使用者名（employee_name）と同じ名前で送信された場合のみ、開始前
+//   （status='reserved'）の予約を本人として変更できる。
+// - 管理者（共有パスワードでログイン中）は、開始後の予約も「訂正」として
+//   変更できるが、reason（訂正理由）が必須。訂正内容は監査ログへ変更前後を記録する。
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   const dict = getDictionary(getLocale());
 
-  const auth = await requireApiUser(dict);
-  if (auth.error) return auth.error;
-  const currentUser = auth.user;
-  const isManager = roleAtLeast(currentUser.role, "vehicle_manager");
+  const isManager = isAdminRequest();
 
   const supabase = getSupabaseAdmin();
 
-  let body: ReservationInput & { correctionReason?: string };
+  let body: ReservationInput & { correctionReason?: string; requesterName?: string };
   try {
     body = await request.json();
   } catch {
@@ -75,7 +69,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
   const existing = mapReservationRow(existingRow as ReservationRow);
 
-  const isOwner = existing.ownerUserId !== null && existing.ownerUserId === currentUser.id;
+  const isOwner = !!body.requesterName && body.requesterName === existing.employeeName;
   if (!isOwner && !isManager) {
     return NextResponse.json({ errors: [dict.apiErrors.forbidden] }, { status: 403 });
   }
@@ -113,7 +107,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .rpc("update_reservation_tx", {
         p_reservation_id: params.id,
         p_vehicle_id: existing.vehicleId,
-        p_updated_by_user_id: currentUser.id,
+        p_updated_by_user_id: null,
         p_employee_name: body.employeeName,
         p_start_time: start.toISOString(),
         p_end_time: end.toISOString(),
@@ -151,8 +145,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       destination: body.destination,
     });
     await writeAuditLog(supabase, {
-      actorUserId: currentUser.id,
-      actorEmail: currentUser.email,
+      actorUserId: null,
+      actorEmail: isManager ? "admin" : body.employeeName,
       action: isCorrection ? "reservation_correct" : "reservation_update",
       targetType: "reservation",
       targetId: updated.id,
@@ -162,7 +156,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
     await enqueueNotification(supabase, {
       eventType: "reservation_updated",
-      targetUserId: updated.ownerUserId,
+      targetUserId: null,
       targetType: "reservation",
       targetId: updated.id,
       data: { startTime: updated.startTime, endTime: updated.endTime, destination: updated.destination },
@@ -177,17 +171,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 }
 
 // DELETE /api/reservations/[id] - 予約のキャンセル（物理削除ではなく status='cancelled' への更新）
-// - 本人は開始前（status='reserved'）の自分の予約のみキャンセルできる。
-// - vehicle_managerは誰の予約でもキャンセルできるが、reasonの入力が必須。
-// - owner_user_id が未割当のレガシー予約は、旧方式のrequesterName自己申告での
-//   本人確認にフォールバックする（移行期間中の互換性維持のため）。
+// ログイン機能がないため、本人確認は使用者名の自己申告一致で行う。
+// - 予約時の使用者名（employee_name）と同じ名前で送信された場合のみ、開始前
+//   （status='reserved'）の予約を本人としてキャンセルできる。
+// - 管理者（共有パスワードでログイン中）は誰の予約でもキャンセルできるが、
+//   reasonの入力が必須。
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const dict = getDictionary(getLocale());
 
-  const auth = await requireApiUser(dict);
-  if (auth.error) return auth.error;
-  const currentUser = auth.user;
-  const isManager = roleAtLeast(currentUser.role, "vehicle_manager");
+  const isManager = isAdminRequest();
 
   let body: { requesterName?: string; cancellationReason?: string } = {};
   try {
@@ -213,9 +205,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const existing = mapReservationRow(existingRow as ReservationRow);
 
   if (!isManager) {
-    const isOwner = existing.ownerUserId !== null && existing.ownerUserId === currentUser.id;
-    const isLegacySelfService = existing.ownerUserId === null && body.requesterName === existing.employeeName;
-    if (!isOwner && !isLegacySelfService) {
+    const isOwner = !!body.requesterName && body.requesterName === existing.employeeName;
+    if (!isOwner) {
       return NextResponse.json({ errors: [dict.apiErrors.notOwnerOrAdmin] }, { status: 403 });
     }
     if (existing.status !== "reserved") {
@@ -231,7 +222,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       status: "cancelled",
       cancellation_reason: body.cancellationReason?.trim() || null,
       cancelled_at: new Date().toISOString(),
-      cancelled_by_user_id: currentUser.id,
+      cancelled_by_user_id: null,
     })
     .eq("id", params.id)
     .eq("status", "reserved")
@@ -254,8 +245,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     destination: existing.destination,
   });
   await writeAuditLog(supabase, {
-    actorUserId: currentUser.id,
-    actorEmail: currentUser.email,
+    actorUserId: null,
+    actorEmail: isManager ? "admin" : existing.employeeName,
     action: "reservation_cancel",
     targetType: "reservation",
     targetId: cancelled.id,
@@ -265,7 +256,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   });
   await enqueueNotification(supabase, {
     eventType: "reservation_cancelled",
-    targetUserId: existing.ownerUserId,
+    targetUserId: null,
     targetType: "reservation",
     targetId: cancelled.id,
     data: { startTime: existing.startTime, endTime: existing.endTime, destination: existing.destination },

@@ -79,6 +79,9 @@ const vi: Dictionary = {
     },
     loadMore: "Tải thêm",
     loadingMore: "Đang tải...",
+    selfPickerPrompt: "Để xem \"Lịch của tôi\", vui lòng chọn tên của bạn.",
+    selfPickerButton: "Hiển thị theo tên này",
+    selfPickerFetchError: "Không thể tải danh sách nhân viên.",
   },
   reservationCard: {
     destination: "Điểm đến",

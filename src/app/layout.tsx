@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Header } from "@/components/Header";
 import { LocaleProvider } from "@/components/LocaleProvider";
-import { getCurrentUser } from "@/lib/auth";
 import { getLocale } from "@/lib/i18n/getLocale";
 import "./globals.css";
 
@@ -21,13 +20,12 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = getLocale();
-  const currentUser = await getCurrentUser();
 
   return (
     <html lang={locale}>
       <body>
         <LocaleProvider initialLocale={locale}>
-          <Header currentUser={currentUser} />
+          <Header />
           <main className="mx-auto max-w-3xl px-4 py-6 pb-24">{children}</main>
         </LocaleProvider>
       </body>

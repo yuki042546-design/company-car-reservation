@@ -2,10 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { getSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 import { useI18n } from "./LocaleProvider";
 
-export function LogoutButton() {
+export function AdminLogoutButton() {
   const { dict } = useI18n();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -13,9 +12,7 @@ export function LogoutButton() {
   async function handleLogout() {
     setLoading(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      await supabase.auth.signOut();
-      router.push("/");
+      await fetch("/api/admin/logout", { method: "POST" });
       router.refresh();
     } finally {
       setLoading(false);
@@ -26,9 +23,9 @@ export function LogoutButton() {
     <button
       onClick={handleLogout}
       disabled={loading}
-      className="whitespace-nowrap rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+      className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
     >
-      {loading ? dict.common.loading : dict.login.logoutButton}
+      {dict.admin.logoutButton}
     </button>
   );
 }

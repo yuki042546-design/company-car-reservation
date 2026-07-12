@@ -1,6 +1,6 @@
 # 実装状況（IMPLEMENTATION_STATUS.md）
 
-最終更新: 2026-07-11。このドキュメントは実際に確認できた範囲を正直に記載しています。
+最終更新: 2026-07-13。このドキュメントは実際に確認できた範囲を正直に記載しています。
 「動作した」ではなく「実装した」項目についても、テスト有無を明記しています。
 
 ---
@@ -95,15 +95,28 @@ erDiagram
 
 ## 2. 完了した機能（コードは実装済み）
 
-### フェーズ1: 認証・権限
-- Supabase Auth（メール/パスワード、招待制、自己サインアップなし）への移行
-- `public.users` テーブル + `auth.users` からの自動プロフィール作成トリガー
-- ロール: `employee` / `vehicle_manager` / `system_admin`
-- 共有管理者パスワード方式の完全撤廃（`ADMIN_PASSWORD`関連ファイルを削除）
-- ミドルウェア（`src/middleware.ts`）によるページ・API双方の一次防御 + 各ページ/Route Handlerでの二次確認（`requirePageUser`/`requireApiUser`/`requireApiRole`）
-- `system_admin` によるユーザー招待・権限変更・有効/無効化・運転資格管理UI
-- `ALLOWED_EMAIL_DOMAINS` によるドメイン制限（未設定時は招待不可＝fail-closed）
-- 全ページ `noindex, nofollow`（ミドルウェアヘッダー + `metadata.robots`の二重設定）
+### フェーズ1: 認証・権限（2026-07-13に方針転換、詳細は下記「認証方式の変更」参照）
+- 一般社員の個人ログインは廃止。予約は使用者名（`employee_name`）の自己申告（リスト選択）で識別
+- 管理者ページ（`/admin`）のみ共有パスワード（`ADMIN_PASSWORD`/`ADMIN_SESSION_SECRET`、`src/lib/adminAuth.ts`/`src/lib/requireAdmin.ts`）で保護
+- 各管理者専用API（車両・整備・社員名リスト編集）は `isAdminRequest()` で個別にガード（ミドルウェアなし、ページ/APIごとの直接チェック）
+- 予約の変更・キャンセルは `requesterName` と `employee_name` の一致確認、または管理者権限で許可
+- 出発・返却・延長・異常報告は誰でも実行可能（車両を物理操作する人が行う前提）
+- 全ページ `noindex, nofollow`（`metadata.robots`で設定）
+
+#### 認証方式の変更（2026-07-13）
+2026-07-11に一度Supabase Auth（個人アカウント単位のログイン・招待制）へ全面移行したが、
+本番運用開始直後に次の問題が連続して発生し、運用負荷が見合わないと判断して共有パスワード
+方式に戻した:
+- Vercel Hobbyプランではcronが1日1回までしか使えず、`vercel.json`の15分毎設定がデプロイ自体を
+  静かにブロックし続けていた（UIにエラーが表示されず原因特定に時間を要した）
+- 招待メールのリンク遷移先（Supabase の Site URL）がlocalhostのままで、本番で開けなかった
+- Supabaseの組み込みメール送信（`noreply@mail.app.supabase.io`）のレート制限に繰り返し抵触し、
+  管理者本人が一度もログインできない状態が続いた
+
+`vehicles`/`maintenance_blocks`/`audit_logs`/`notifications`などのデータモデルや、予約・車両の
+状態遷移（出発/返却/延長）、予約フォームUX、一覧フィルター、整備管理画面は**そのまま維持**し、
+「個人ログインをやめる」部分だけを差し替えた。`public.users`テーブル・RLSポリシー・Supabase Auth
+自体の設定はDBに残っているが、アプリからは参照していない（削除はしていない）。
 
 ### フェーズ2: データモデル
 - `vehicles` / `vehicle_usage_records` / `maintenance_blocks` / `audit_logs` / `app_settings` テーブル追加
@@ -124,7 +137,7 @@ erDiagram
 
 ### フェーズ5: 履歴・監査
 - 物理削除を廃止し、`DELETE`は内部的に「キャンセル」（status更新）として扱う
-- 開始後の予約は一般社員が変更不可（`vehicle_manager`以上のみ、理由入力必須）
+- 開始後の予約は本人（自己申告）が変更不可（管理者のみ、理由入力必須）
 - `audit_logs` テーブル + 管理画面での閲覧UI（`AdminAuditLog`）
 - 既存の `reservation_logs`（予約作成/変更/キャンセルの簡易履歴）はそのまま維持し、新しい `audit_logs`（出発/返却/延長/車両状態変更/ユーザー権限変更なども含む網羅的な監査ログ）を並行して追加
 
@@ -141,8 +154,8 @@ erDiagram
 - 上記以外のイベント種別（利用前日リマインド、返却遅延、車検期限等）は型定義のみで、時間監視用のスケジュールジョブが必要なため未実装（下記参照）
 
 ### テスト
-- Vitestによるユニットテスト36件（予約バリデーション・状態遷移・ロール判定・ドメイン許可リスト）はすべて成功
-- Playwrightの雛形 + 未認証ページのスモークテスト（実行はローカルで確認済み。詳細は下記「テスト」参照）
+- Vitestによるユニットテスト27件（予約バリデーション・状態遷移）はすべて成功
+- Playwrightの雛形 + スモークテスト（実行はローカルで確認済み。詳細は下記「テスト」参照）
 
 ---
 
@@ -169,7 +182,7 @@ erDiagram
 | Google/Outlookカレンダー連携・ICS出力 | **未実装** |
 | 「JP/VN」表示を「日本語 | Tiếng Việt」に変更 | **未実装**（既存の短縮表示のまま） |
 | 自動アクセシビリティテスト | **未実装** |
-| E2Eの認証込みフロー（ログイン後の予約作成・変更・キャンセル・出発・返却等） | **未実装**（実行にはSupabaseプロジェクトへの検証用ユーザー作成が必要なため。雛形とスモークテストのみ用意） |
+| E2Eの予約フロー（作成・変更・キャンセル・出発・返却等）と管理者ログイン | **未実装**（雛形とスモークテストのみ用意） |
 
 ---
 
@@ -182,33 +195,26 @@ erDiagram
 
 ## 5. 手動確認が必要な項目（このセッションでは未検証）
 
-- `supabase/schema.sql` のフェーズ1〜3追加分を、実際のSupabaseプロジェクトのSQL Editorで実行し、エラーなく完了すること（本サンドボックス環境からは本番DBへ接続していないため、**構文レビューのみ行い、実行は未検証**）。
-- Supabaseダッシュボードで以下を手動設定すること:
-  - Authentication > Providers > Email > 「Enable email signups」を無効化（招待制を徹底するため）
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` を環境変数に追加
-- 実際にユーザーを招待し、招待メール受信 → パスワード設定 → ログインの一連の流れ。
-- RLSポリシーが意図通りに動作すること（anon keyで直接reservationsを読めないこと等）。
-- `create_reservation_tx`/`update_reservation_tx` のPL/pgSQL関数を実際のPostgres上で実行し、エラーが出ないこと（本セッションではSQL文法のレビューのみ）。
 - 2ユーザーが同時に同じ時間帯を予約した際に、片方だけ成功しもう片方が409になること（実際の同時実行テストは未実施。DBの排他制約により理論上は保証される設計）。
-- Vercelへのデプロイ後、ミドルウェアが正しく動作すること（`@supabase/ssr`のEdge Runtime互換性について、ビルド時に軽微な警告が出ることを確認済み。実害の有無は要確認）。
+- Teams/Slack通知の実配信（`TEAMS_WEBHOOK_URL`/`SLACK_WEBHOOK_URL`未設定のため未検証）。
 
 ---
 
 ## 6. 優先度（次にやるべきこと）
 
-1. **最優先**: 本番Supabaseへのスキーマ適用（バックアップ後）+ 初期ユーザー招待 + 動作確認（ユーザー側作業待ち）
+1. ~~本番Supabaseへのスキーマ適用~~ ✅ 完了（2026-07-13）
 2. ~~予約フォームのUX改善~~ ✅ 完了
 3. ~~予約一覧のフィルター・タブ~~ ✅ 完了
 4. ~~整備管理画面~~ ✅ 完了
 5. Teams通知の実配信検証（`TEAMS_WEBHOOK_URL`発行待ち）
-6. E2Eテストの拡充（認証込みフロー。項目1の完了が前提）
+6. E2Eテストの拡充（予約作成・変更・キャンセル・出発/返却・管理者ログインの一連のフロー）
 
 ---
 
 ## 7. 関連ファイル
 
 - スキーマ: `supabase/schema.sql`
-- 認証: `src/lib/auth.ts`, `src/middleware.ts`, `src/lib/supabaseServer.ts`, `src/lib/supabaseBrowser.ts`
+- 認証: `src/lib/adminAuth.ts`, `src/lib/requireAdmin.ts`, `src/app/api/admin/`
 - 予約API: `src/app/api/reservations/`
 - 状態遷移: `src/lib/reservationStatus.ts`
 - 監査ログ: `src/lib/auditLog.ts`

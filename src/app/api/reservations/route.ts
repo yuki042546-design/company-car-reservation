@@ -3,8 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapReservationRow, type ReservationRow } from "@/lib/mappers";
 import { limitsFromAppSettings, validateReservationInput } from "@/lib/reservationRules";
 import { isExclusionViolation } from "@/lib/overlapCheck";
-import { requireApiUser, roleAtLeast } from "@/lib/auth";
 import { getAppSettings } from "@/lib/data";
+import { isAdminRequest } from "@/lib/requireAdmin";
 import { getDefaultVehicle } from "@/lib/vehicles";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -19,12 +19,9 @@ export const runtime = "nodejs";
 // GET /api/reservations?from=ISO&to=ISO
 // from/to を省略すると全予約を返す（全予約一覧用）。
 // 指定すると、その範囲と重なる予約のみ返す（今日/今週の予約用）。
-// ログイン済みの社員なら誰でも閲覧できる（社内共有カレンダーのため）。
+// ログイン機能がないため誰でも閲覧できる（社内共有カレンダーのため）。
 export async function GET(request: NextRequest) {
   const dict = getDictionary(getLocale());
-
-  const auth = await requireApiUser(dict);
-  if (auth.error) return auth.error;
 
   const supabase = getSupabaseAdmin();
   const { searchParams } = new URL(request.url);
@@ -47,19 +44,11 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/reservations - 新規予約登録
-// 所有者は原則ログイン中の本人（owner_user_id = 自分）。vehicle_manager/system_admin は
-// onBehalfOfUserId を指定して代理予約できる。重複判定・整備期間チェック・INSERTは
-// create_reservation_tx RPC 内でアドバイザリーロックを使いアトミックに行う。
+// ログイン機能がないため、予約者は使用者名（employeeName）の自己申告のみで識別する。
+// 重複判定・整備期間チェック・INSERTは create_reservation_tx RPC 内で
+// アドバイザリーロックを使いアトミックに行う。
 export async function POST(request: NextRequest) {
   const dict = getDictionary(getLocale());
-
-  const auth = await requireApiUser(dict);
-  if (auth.error) return auth.error;
-  const currentUser = auth.user;
-
-  if (!currentUser.driverEligible) {
-    return NextResponse.json({ errors: [dict.validation.userNotDriverEligible] }, { status: 403 });
-  }
 
   const supabase = getSupabaseAdmin();
 
@@ -70,11 +59,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ errors: [dict.apiErrors.invalidRequestBody] }, { status: 400 });
   }
 
-  const isManager = roleAtLeast(currentUser.role, "vehicle_manager");
-  const ownerUserId = isManager && body.onBehalfOfUserId ? body.onBehalfOfUserId : currentUser.id;
-
   const settings = await getAppSettings();
-  const limits = limitsFromAppSettings(settings, isManager);
+  const limits = limitsFromAppSettings(settings, isAdminRequest());
 
   const validation = validateReservationInput(body, dict, new Date(), limits);
   if (!validation.valid) {
@@ -101,8 +87,8 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .rpc("create_reservation_tx", {
         p_vehicle_id: vehicle.id,
-        p_owner_user_id: ownerUserId,
-        p_created_by_user_id: currentUser.id,
+        p_owner_user_id: null,
+        p_created_by_user_id: null,
         p_employee_name: body.employeeName,
         p_start_time: start.toISOString(),
         p_end_time: end.toISOString(),
@@ -135,8 +121,8 @@ export async function POST(request: NextRequest) {
       destination: body.destination,
     });
     await writeAuditLog(supabase, {
-      actorUserId: currentUser.id,
-      actorEmail: currentUser.email,
+      actorUserId: null,
+      actorEmail: body.employeeName,
       action: "reservation_create",
       targetType: "reservation",
       targetId: reservation.id,
@@ -144,7 +130,7 @@ export async function POST(request: NextRequest) {
     });
     await enqueueNotification(supabase, {
       eventType: "reservation_created",
-      targetUserId: ownerUserId,
+      targetUserId: null,
       targetType: "reservation",
       targetId: reservation.id,
       data: { startTime: reservation.startTime, endTime: reservation.endTime, destination: reservation.destination },

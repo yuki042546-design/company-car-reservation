@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { requirePageUser, roleAtLeast } from "@/lib/auth";
 import {
   getCurrentUsageReservation,
   getNextReservation,
@@ -34,7 +33,6 @@ const iconStrokeProps = {
 };
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const currentUser = await requirePageUser();
   const locale = getLocale();
   const dict = getDictionary(locale);
   const now = new Date();
@@ -53,13 +51,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <div className="space-y-8">
       {vehicle && (
-        <VehicleStatusBanner
-          vehicle={vehicle}
-          currentUsage={currentUsage}
-          nextReservation={nextReservation}
-          currentUserId={currentUser.id}
-          isManager={roleAtLeast(currentUser.role, "vehicle_manager")}
-        />
+        <VehicleStatusBanner vehicle={vehicle} currentUsage={currentUsage} nextReservation={nextReservation} />
       )}
 
       <section>

@@ -13,6 +13,7 @@ import {
   splitDatetimeLocal,
 } from "@/lib/dateUtils";
 import { validateReservationInput } from "@/lib/reservationRules";
+import { rememberEmployeeName } from "@/lib/lastEmployeeName";
 import { DateTimeSelect } from "./DateTimeSelect";
 import { DurationSelect, type DurationValue } from "./DurationSelect";
 import { EmployeeCombobox } from "./EmployeeCombobox";
@@ -124,6 +125,10 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
       return;
     }
 
+    // ログイン機能がないため、変更時は元の使用者名を本人確認として送る
+    // （管理者は別途ログイン済みなので不要）。
+    const payload = mode === "edit" ? { ...input, requesterName: initial?.employeeName } : input;
+
     setSubmitting(true);
     try {
       const url = mode === "create" ? "/api/reservations" : `/api/reservations/${reservationId}`;
@@ -131,7 +136,7 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
 
@@ -140,6 +145,7 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
         return;
       }
 
+      rememberEmployeeName(employeeName);
       router.push("/home");
       router.refresh();
     } catch {

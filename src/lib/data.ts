@@ -193,7 +193,8 @@ export type ReservationListTab = "self" | "today" | "upcoming" | "in_use" | "pas
 
 export interface ReservationFilterOptions {
   tab: ReservationListTab;
-  ownerUserId: string;
+  /** ログイン機能がないため、「自分の予約」タブは自己申告の使用者名で絞り込む */
+  employeeName?: string;
   page?: number;
   pageSize?: number;
 }
@@ -209,6 +210,10 @@ export interface ReservationFilterResult {
  * 過去予約等を無制限に一括取得しないよう、ページネーション（range）を使う。
  */
 export async function getFilteredReservations(options: ReservationFilterOptions): Promise<ReservationFilterResult> {
+  if (options.tab === "self" && !options.employeeName) {
+    return { reservations: [], hasMore: false, total: 0 };
+  }
+
   const supabase = getSupabaseAdmin();
   const pageSize = options.pageSize ?? 30;
   const page = Math.max(1, options.page ?? 1);
@@ -220,7 +225,7 @@ export async function getFilteredReservations(options: ReservationFilterOptions)
 
   switch (options.tab) {
     case "self":
-      query = query.eq("owner_user_id", options.ownerUserId).order("start_time", { ascending: false });
+      query = query.eq("employee_name", options.employeeName).order("start_time", { ascending: false });
       break;
     case "today": {
       const { start, end } = getTodayRangeJst(now);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapReservationRow, mapMaintenanceBlockRow, type MaintenanceBlockRow, type ReservationRow } from "@/lib/mappers";
-import { requireApiRole, requireApiUser } from "@/lib/auth";
+import { isAdminRequest } from "@/lib/requireAdmin";
 import { writeAuditLog } from "@/lib/auditLog";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -11,14 +11,13 @@ export const runtime = "nodejs";
 
 const VALID_TYPES: MaintenanceType[] = ["inspection", "service", "repair", "tire_change", "cleaning", "other"];
 
-// GET /api/maintenance - 整備・利用停止期間の一覧（vehicle_manager以上のみ）
+// GET /api/maintenance - 整備・利用停止期間の一覧（管理者のみ）
 export async function GET() {
   const dict = getDictionary(getLocale());
 
-  const auth = await requireApiUser(dict);
-  if (auth.error) return auth.error;
-  const roleError = requireApiRole(auth.user, "vehicle_manager", dict);
-  if (roleError) return roleError;
+  if (!isAdminRequest()) {
+    return NextResponse.json({ errors: [dict.apiErrors.forbidden] }, { status: 401 });
+  }
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -33,16 +32,15 @@ export async function GET() {
   return NextResponse.json({ blocks: (data as MaintenanceBlockRow[]).map(mapMaintenanceBlockRow) });
 }
 
-// POST /api/maintenance - 整備・利用停止期間の登録（vehicle_manager以上のみ）
+// POST /api/maintenance - 整備・利用停止期間の登録（管理者のみ）
 // 既存予約と競合する場合は、予約を勝手にキャンセルせず、競合している予約の一覧を
 // 返して登録自体を拒否する（管理者が個別に判断してキャンセルしてから再登録する）。
 export async function POST(request: NextRequest) {
   const dict = getDictionary(getLocale());
 
-  const auth = await requireApiUser(dict);
-  if (auth.error) return auth.error;
-  const roleError = requireApiRole(auth.user, "vehicle_manager", dict);
-  if (roleError) return roleError;
+  if (!isAdminRequest()) {
+    return NextResponse.json({ errors: [dict.apiErrors.forbidden] }, { status: 401 });
+  }
 
   let body: { vehicleId?: string; startAt?: string; endAt?: string; type?: string; reason?: string };
   try {
@@ -94,7 +92,7 @@ export async function POST(request: NextRequest) {
       end_at: end.toISOString(),
       type: body.type,
       reason: body.reason?.trim() || null,
-      created_by_user_id: auth.user.id,
+      created_by_user_id: null,
     })
     .select("*")
     .single();
@@ -106,8 +104,8 @@ export async function POST(request: NextRequest) {
   const block = mapMaintenanceBlockRow(data as MaintenanceBlockRow);
 
   await writeAuditLog(supabase, {
-    actorUserId: auth.user.id,
-    actorEmail: auth.user.email,
+    actorUserId: null,
+    actorEmail: "admin",
     action: "maintenance_create",
     targetType: "maintenance_block",
     targetId: block.id,

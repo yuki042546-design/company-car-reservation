@@ -1,18 +1,18 @@
 import Link from "next/link";
-import { requirePageUser } from "@/lib/auth";
 import { getFilteredReservations, type ReservationListTab } from "@/lib/data";
 import { formatDate, isSameJstDate } from "@/lib/dateUtils";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { ReservationCard } from "@/components/ReservationCard";
 import { SelfDeleteButton } from "@/components/SelfDeleteButton";
+import { SelfTabNamePicker } from "@/components/SelfTabNamePicker";
 
 export const dynamic = "force-dynamic";
 
 const TABS: ReservationListTab[] = ["self", "today", "upcoming", "in_use", "past", "cancelled"];
 
 interface AllReservationsPageProps {
-  searchParams: { tab?: string; page?: string };
+  searchParams: { tab?: string; page?: string; name?: string };
 }
 
 function isValidTab(value: string | undefined): value is ReservationListTab {
@@ -20,17 +20,17 @@ function isValidTab(value: string | undefined): value is ReservationListTab {
 }
 
 export default async function AllReservationsPage({ searchParams }: AllReservationsPageProps) {
-  const currentUser = await requirePageUser();
   const locale = getLocale();
   const dict = getDictionary(locale);
 
   // 通常社員の初期表示は「自分の予約」。他のタブへはヘッダー下のタブから切り替える。
   const tab: ReservationListTab = isValidTab(searchParams.tab) ? searchParams.tab : "self";
   const page = Math.max(1, Number(searchParams.page) || 1);
+  const employeeName = searchParams.name?.trim() || undefined;
 
   const { reservations, hasMore } = await getFilteredReservations({
     tab,
-    ownerUserId: currentUser.id,
+    employeeName,
     page,
   });
 
@@ -65,7 +65,9 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
         ))}
       </div>
 
-      {groups.length === 0 ? (
+      {tab === "self" && !employeeName ? (
+        <SelfTabNamePicker />
+      ) : groups.length === 0 ? (
         <p className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-4 text-sm text-gray-400">
           {dict.reservationsPage.empty}
         </p>
@@ -93,7 +95,7 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
       {hasMore && (
         <div className="mt-6 text-center">
           <Link
-            href={`/reservations?tab=${tab}&page=${page + 1}`}
+            href={`/reservations?tab=${tab}&page=${page + 1}${employeeName ? `&name=${encodeURIComponent(employeeName)}` : ""}`}
             className="inline-block rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
           >
             {dict.reservationsPage.loadMore}

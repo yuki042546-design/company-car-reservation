@@ -1,4 +1,3 @@
-import { requirePageUser } from "@/lib/auth";
 import { getActiveEmployees } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -11,7 +10,6 @@ interface NewReservationPageProps {
 }
 
 export default async function NewReservationPage({ searchParams }: NewReservationPageProps) {
-  await requirePageUser();
   const employees = await getActiveEmployees();
   const dict = getDictionary(getLocale());
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapVehicleRow, type VehicleRow } from "@/lib/mappers";
-import { requireApiRole, requireApiUser } from "@/lib/auth";
+import { isAdminRequest } from "@/lib/requireAdmin";
 import { canTransitionVehicle } from "@/lib/reservationStatus";
 import { writeAuditLog } from "@/lib/auditLog";
 import { getDictionary } from "@/lib/i18n/dictionary";
@@ -16,14 +16,13 @@ interface RouteParams {
 
 const VALID_STATUSES: VehicleStatus[] = ["available", "in_use", "maintenance", "out_of_service"];
 
-// PATCH /api/vehicles/[id] - 車両情報・状態の変更（vehicle_manager以上のみ）
+// PATCH /api/vehicles/[id] - 車両情報・状態の変更（管理者のみ）
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const dict = getDictionary(getLocale());
 
-  const auth = await requireApiUser(dict);
-  if (auth.error) return auth.error;
-  const roleError = requireApiRole(auth.user, "vehicle_manager", dict);
-  if (roleError) return roleError;
+  if (!isAdminRequest()) {
+    return NextResponse.json({ errors: [dict.apiErrors.forbidden] }, { status: 401 });
+  }
 
   let body: Record<string, unknown>;
   try {
@@ -130,8 +129,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const updated = mapVehicleRow(data as VehicleRow);
 
   await writeAuditLog(supabase, {
-    actorUserId: auth.user.id,
-    actorEmail: auth.user.email,
+    actorUserId: null,
+    actorEmail: "admin",
     action: "vehicle_update",
     targetType: "vehicle",
     targetId: updated.id,

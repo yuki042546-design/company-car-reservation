@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapReservationRow, type ReservationRow } from "@/lib/mappers";
-import { requireApiUser, roleAtLeast } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { canTransitionReservation } from "@/lib/reservationStatus";
@@ -33,15 +32,10 @@ type ActionBody =
   | { action: "report_issue"; issueDescription: string };
 
 // POST /api/reservations/[id]/action - 出発・返却・延長・異常報告
-// これらは予約の「利用」フェーズの操作であり、予約者本人（owner_user_id一致）または
-// vehicle_manager以上のみ実行できる。ステータス遷移はlib/reservationStatus.tsのルールで検証する。
+// ログイン機能がないため、これらは誰でも実行できる（社内少人数での運用を前提とした
+// 自己申告ベースの信頼モデル。予約の作成・編集・キャンセルと同じ扱い）。
 export async function POST(request: NextRequest, { params }: RouteParams) {
   const dict = getDictionary(getLocale());
-
-  const auth = await requireApiUser(dict);
-  if (auth.error) return auth.error;
-  const currentUser = auth.user;
-  const isManager = roleAtLeast(currentUser.role, "vehicle_manager");
 
   let body: ActionBody;
   try {
@@ -66,11 +60,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
   const existing = mapReservationRow(existingRow as ReservationRow);
 
-  const isOwner = existing.ownerUserId !== null && existing.ownerUserId === currentUser.id;
-  if (!isOwner && !isManager) {
-    return NextResponse.json({ errors: [dict.apiErrors.forbidden] }, { status: 403 });
-  }
-
   if (body.action === "depart") {
     if (!canTransitionReservation(existing.status, "in_use")) {
       return NextResponse.json({ errors: [dict.action.invalidTransition] }, { status: 409 });
@@ -78,7 +67,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { data: updatedRow, error } = await supabase
       .from("reservations")
-      .update({ status: "in_use", updated_by_user_id: currentUser.id })
+      .update({ status: "in_use", updated_by_user_id: null })
       .eq("id", existing.id)
       .eq("status", "reserved")
       .select("*")
@@ -91,7 +80,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await supabase.from("vehicle_usage_records").insert({
       reservation_id: existing.id,
       vehicle_id: existing.vehicleId,
-      user_id: currentUser.id,
+      user_id: null,
       checked_out_at: new Date().toISOString(),
       departure_odometer: body.departureOdometer ?? null,
       fuel_level_at_departure: body.fuelLevelAtDeparture ?? null,
@@ -102,8 +91,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await supabase.from("vehicles").update({ status: "in_use" }).eq("id", existing.vehicleId);
 
     await writeAuditLog(supabase, {
-      actorUserId: currentUser.id,
-      actorEmail: currentUser.email,
+      actorUserId: null,
+      actorEmail: existing.employeeName,
       action: "reservation_depart",
       targetType: "reservation",
       targetId: existing.id,
@@ -121,7 +110,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { data: updatedRow, error } = await supabase
       .from("reservations")
-      .update({ status: "completed", updated_by_user_id: currentUser.id })
+      .update({ status: "completed", updated_by_user_id: null })
       .eq("id", existing.id)
       .in("status", ["in_use", "overdue"])
       .select("*")
@@ -151,8 +140,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await supabase.from("vehicles").update({ status: "available" }).eq("id", existing.vehicleId);
 
     await writeAuditLog(supabase, {
-      actorUserId: currentUser.id,
-      actorEmail: currentUser.email,
+      actorUserId: null,
+      actorEmail: existing.employeeName,
       action: "reservation_return",
       targetType: "reservation",
       targetId: existing.id,
@@ -197,7 +186,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { data: updatedRow, error } = await supabase
       .from("reservations")
-      .update({ end_time: newEnd.toISOString(), updated_by_user_id: currentUser.id })
+      .update({ end_time: newEnd.toISOString(), updated_by_user_id: null })
       .eq("id", existing.id)
       .select("*")
       .maybeSingle();
@@ -218,8 +207,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     await writeAuditLog(supabase, {
-      actorUserId: currentUser.id,
-      actorEmail: currentUser.email,
+      actorUserId: null,
+      actorEmail: existing.employeeName,
       action: "reservation_extend",
       targetType: "reservation",
       targetId: existing.id,
@@ -245,8 +234,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .eq("reservation_id", existing.id);
 
     await writeAuditLog(supabase, {
-      actorUserId: currentUser.id,
-      actorEmail: currentUser.email,
+      actorUserId: null,
+      actorEmail: existing.employeeName,
       action: "reservation_report_issue",
       targetType: "reservation",
       targetId: existing.id,

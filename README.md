@@ -1,12 +1,12 @@
 # 社用車予約Webアプリ
 
-会社が保有する社用車を、社員だけがログインして安全に予約・利用管理できる社内システムです。Next.js (App Router) + TypeScript + Supabase (Postgres + Auth) で構築しています。将来的に車両が複数台に増えても作り直しが不要なデータ構造になっています。
+会社が保有する社用車を、社員が予約・利用管理できる社内システムです。Next.js (App Router) + TypeScript + Supabase (Postgres) で構築しています。将来的に車両が複数台に増えても作り直しが不要なデータ構造になっています。社員の個人ログインはなく（使用者名の自己申告のみ）、管理者ページ（`/admin`）のみ共有パスワードで保護されます。
 
 詳しい実装状況（完了/未完了の切り分け）は [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)、セキュリティ設計は [SECURITY.md](SECURITY.md)、運用手順は [OPERATIONS.md](OPERATIONS.md) を参照してください。
 
 ## 主な機能
 
-- **認証・権限**: Supabase Auth（メール/パスワード、招待制）によるログイン。共有パスワードは廃止し、社員ごとの個人アカウントで `employee` / `vehicle_manager` / `system_admin` の3ロールを持つ
+- **認証・権限**: 一般社員向けの個人ログインはなし（予約時に使用者名をリストから選ぶ自己申告方式）。管理者ページ（`/admin`）のみ共有パスワードで保護
 - **ホーム画面**: 車両の現在状態（利用可能/使用中/整備中/利用停止中）を最上部に表示。使用中なら利用者・返却予定時刻・行き先、利用可能なら次の予約と鍵の保管場所を表示
 - 予約登録・変更・キャンセル（開始前のみ本人が操作可。開始後の訂正は管理者のみ、理由入力必須）
 - 出発・返却・延長・異常報告（予約のステータスを`reserved→in_use→completed`等で管理）
@@ -15,7 +15,7 @@
 - 予約時間ルールの検証（30分単位、最短/最大利用時間・予約可能期間は管理設定で変更可）
 - 予約重複防止（アプリ側 + DBの排他制約 + アドバイザリーロックによる多層防御。車両×整備期間との重複も防止）
 - 予約・変更・キャンセル・出発・返却・延長・権限変更等の監査ログ（管理者ページで閲覧可能）
-- 社員名リスト（レガシー）・ユーザー管理（招待・権限変更・無効化）
+- 社員名リストの管理（追加・編集・無効化）
 - 日本語 / ベトナム語の言語切替、行き先・用途の自動翻訳
 - 通知機能（outbox方式）。社内で利用しているMicrosoft Teamsへのincoming webhook通知に対応（Slack例も同梱）
 - スマホ対応のレスポンシブUI
@@ -30,31 +30,15 @@ npm install
 
 # 2. 環境変数ファイルを作成
 cp .env.local.example .env.local
-# .env.local を開き、Supabase の値などを設定する（詳細は下記「環境変数」参照）
+# .env.local を開き、Supabase の値・ADMIN_PASSWORD などを設定する（詳細は下記「環境変数」参照）
 
 # 3. Supabase 側でテーブルを作成する（下記「Supabaseのテーブル定義」参照）
 
-# 4. Supabaseダッシュボードで Authentication > Providers > Email >
-#    「Enable email signups」を無効化する（招待制を徹底するため。SECURITY.md参照）
-
-# 5. 開発サーバーを起動
+# 4. 開発サーバーを起動
 npm run dev
-
-# 6. 最初の system_admin アカウントを作る（下記「初期セットアップ」参照）
 ```
 
-ブラウザで `http://localhost:3000` を開くと確認できます。スマホ実機で確認したい場合は、`npm run dev -- -H 0.0.0.0` などでLAN内からアクセスしてください。
-
-### 初期セットアップ（最初の管理者アカウント）
-
-招待は`system_admin`しか行えないため、最初の1人だけはSQLで直接作成する必要があります。
-
-1. Supabaseダッシュボード → Authentication → Users → 「Add user」で自分のメールアドレスを使い、パスワード付きでユーザーを作成する（招待メールではなく直接作成でよい）
-2. SQL Editorで、作成したユーザーの`public.users`行を`system_admin`に更新する:
-   ```sql
-   update users set role = 'system_admin' where email = 'you@example.co.jp';
-   ```
-3. 作成したメールアドレス・パスワードで `/login` からログインし、`/admin` の「ユーザー管理」から他のメンバーを招待する
+ブラウザで `http://localhost:3000` を開くと確認できます。スマホ実機で確認したい場合は、`npm run dev -- -H 0.0.0.0` などでLAN内からアクセスしてください。管理者ページ（`/admin`）は `.env.local` の `ADMIN_PASSWORD` でログインできます。
 
 ### 初期車両の設定
 
@@ -146,7 +130,7 @@ Supabase プロジェクトの **SQL Editor** で [`supabase/schema.sql`](supaba
 
 ### RLS（Row Level Security）について
 
-このアプリはブラウザから直接 Supabase を呼び出さず、**基本的に Next.js の API ルート（サーバー側・service role key）を経由**します。そのため大半のテーブルはRLSを有効化した上でポリシーを一切作成せず、anon キーによる直接アクセスを完全にブロックしています。一方、`users` / `vehicles` / `maintenance_blocks` / `vehicle_usage_records` / `app_settings` / `audit_logs` には実際に機能するRLSポリシーがあります（ログイン確認処理が anon key + セッションで `users` テーブルを直接読むため）。詳細は [SECURITY.md](SECURITY.md) を参照してください。
+このアプリはブラウザから直接 Supabase を呼び出さず、**すべて Next.js の API ルート（サーバー側・service role key）を経由**します。ログイン機能がなく anon key も使用しないため、全テーブルでRLSを有効化した上でポリシーを一切作成せず、anon キーによる直接アクセスを完全にブロックしています。詳細は [SECURITY.md](SECURITY.md) を参照してください。
 
 ---
 
@@ -157,16 +141,16 @@ Supabase プロジェクトの **SQL Editor** で [`supabase/schema.sql`](supaba
 | 変数名 | 説明 | 取得方法 |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase プロジェクトURL | Supabase ダッシュボード → Settings → API |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase の anon/public key | 同上（ブラウザに公開される前提のキー。RLSで保護） |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase の service role key（**秘密情報**） | 同上（`service_role` の値。絶対にクライアントに公開しないこと） |
-| `ALLOWED_EMAIL_DOMAINS` | ユーザー招待を許可するメールドメイン（カンマ区切り） | 例: `example.co.jp,group-example.co.jp`。未設定だと誰も招待できません |
+| `ADMIN_PASSWORD` | 管理者ページ（`/admin`）の共有ログインパスワード | 自由に決める |
+| `ADMIN_SESSION_SECRET` | 管理者セッションCookieの署名に使うランダムな文字列（32文字以上推奨） | `openssl rand -hex 32` などで生成 |
 | `CRON_SECRET` | Vercel Cronから通知処理エンドポイントを呼び出す際の認証秘密文字列 | `openssl rand -hex 32` などで生成（任意、通知機能を使う場合のみ） |
 | `TEAMS_WEBHOOK_URL` | Microsoft Teamsの通知チャネルに設定したIncoming Webhook URL（任意） | Teamsのチャネル → コネクタ → Incoming Webhook で発行 |
 | `SLACK_WEBHOOK_URL` | Slack通知を使う場合のIncoming Webhook URL（任意） | Slack側で発行 |
 
 > **注意**: `SUPABASE_SERVICE_ROLE_KEY` は全テーブルへのフルアクセス権を持つ強力なキーです。`NEXT_PUBLIC_` を付けていないため、ブラウザには一切送信されず、サーバーサイド（API ルート）でのみ使用されます。Gitにコミットしないでください（`.gitignore` で `.env*.local` は除外済みです）。
 >
-> **旧・共有パスワード方式（`ADMIN_PASSWORD`/`ADMIN_SESSION_SECRET`）はSupabase Auth移行に伴い廃止しました。** `.env.local`に残っていても読み込まれないため、削除してください。
+> **旧・Supabase Auth方式（`NEXT_PUBLIC_SUPABASE_ANON_KEY`/`ALLOWED_EMAIL_DOMAINS`）は運用負荷が大きかったため廃止し、共有パスワード方式に戻しました。** `.env.local`に残っていても読み込まれないため、削除してください。
 
 ---
 
@@ -176,9 +160,9 @@ Supabase プロジェクトの **SQL Editor** で [`supabase/schema.sql`](supaba
 2. [Vercel](https://vercel.com/) でリポジトリを Import する
 3. Vercel の **Project Settings → Environment Variables** に、上記「環境変数」を設定する（`CRON_SECRET`/`TEAMS_WEBHOOK_URL`/`SLACK_WEBHOOK_URL`は通知機能を使う場合のみ）
 4. Deploy を実行する
-5. デプロイ完了後、発行された URL にアクセスして動作確認する（未ログイン状態では `/` `/guide` `/login` 以外にアクセスできないことを確認）
+5. デプロイ完了後、発行された URL にアクセスして動作確認する（`/admin` にアクセスすると共有パスワードのログイン画面が出ることを確認）
 
-Vercel はプルリクエストごとにプレビュー環境を作成できます。環境変数はプレビュー用と本番用で同じ Supabase プロジェクトを共用しても問題ありません（社内ツールのため）。`vercel.json` に通知処理用のCron設定（15分毎）が含まれています。
+Vercel はプルリクエストごとにプレビュー環境を作成できます。環境変数はプレビュー用と本番用で同じ Supabase プロジェクトを共用しても問題ありません（社内ツールのため）。`vercel.json` に通知処理用のCron設定（Vercel Hobbyプランの制約により1日1回）が含まれています。
 
 ---
 
@@ -198,13 +182,10 @@ npm run build       # 本番ビルド
 
 ```
 src/
-  middleware.ts                    認証の一次防御（未ログインをリダイレクト/401、noindexヘッダー付与）
   app/
-    page.tsx                       表紙ページ（認証不要）
-    login/page.tsx                 ログインページ
-    auth/set-password/page.tsx     招待・パスワード再設定リンクの受け皿
-    home/page.tsx                  ログイン後トップ（車両状態バナー、カレンダー/詳細な時間、今日/今週の予約）
-    guide/page.tsx                 使い方ページ（認証不要）
+    page.tsx                       表紙ページ
+    home/page.tsx                  トップ（車両状態バナー、カレンダー/詳細な時間、今日/今週の予約）
+    guide/page.tsx                 使い方ページ
     layout.tsx                     全体レイアウト・ヘッダー
     globals.css                    Tailwind の読み込み・共通スタイル
     reservations/
@@ -212,35 +193,37 @@ src/
       new/page.tsx                 新規予約フォーム
       [id]/edit/page.tsx           予約変更フォーム
     admin/
-      page.tsx                     管理者ページ（vehicle_manager以上のみ）
+      page.tsx                     管理者ページ（共有パスワードで保護）
     api/
+      admin/login/route.ts         管理者ログイン（パスワード照合・セッションCookie発行）
+      admin/logout/route.ts        管理者ログアウト
+      admin/session/route.ts       管理者セッション確認
       reservations/route.ts        GET(一覧) / POST(新規登録・アトミック)
       reservations/[id]/route.ts   GET(単体) / PUT(変更・訂正) / DELETE(キャンセル)
       reservations/[id]/action/route.ts  POST(出発・返却・延長・異常報告)
       vehicles/route.ts            GET(車両一覧)
-      vehicles/[id]/route.ts       PATCH(車両情報・状態変更・vehicle_manager以上)
-      users/route.ts               GET(ユーザー一覧) / POST(招待・system_adminのみ)
-      users/[id]/route.ts          PATCH(権限・有効/無効・運転資格・system_adminのみ)
-      employees/route.ts           GET(社員一覧・レガシー) / POST(追加・vehicle_manager以上)
-      employees/[id]/route.ts      PATCH(編集・有効/無効切替・vehicle_manager以上)
+      vehicles/[id]/route.ts       PATCH(車両情報・状態変更・管理者のみ)
+      employees/route.ts           GET(社員一覧) / POST(追加・管理者のみ)
+      employees/[id]/route.ts      PATCH(編集・有効/無効切替・管理者のみ)
       cron/process-notifications/route.ts  通知outboxの処理（CRON_SECRET保護）
   components/
-    LoginForm.tsx / SetPasswordForm.tsx / LogoutButton.tsx  認証UI
+    AdminLoginForm.tsx / AdminLogoutButton.tsx  管理者ログインUI
+    SelfTabNamePicker.tsx          「自分の予約」タブ用の名前選択（ブラウザに記憶）
     VehicleStatusBanner.tsx        ホーム画面の車両状態表示・出発/返却/延長ボタン
-    UserManager.tsx                ユーザー招待・権限変更UI
     AdminAuditLog.tsx              監査ログ表示（管理者ページ）
     ReservationForm.tsx            予約登録・変更フォーム（新規/編集で共用）
     ReservationCard.tsx            予約1件分の表示カード（ステータスバッジ付き）
     TopScheduleToggle.tsx / MonthCalendar.tsx / TodayGanttChart.tsx  カレンダー・詳細な時間表示
     AdminReservationList.tsx       管理者向け予約一覧（複数選択・一括キャンセル）
     AdminOperationHistory.tsx      予約の簡易操作履歴（レガシー）
-    EmployeeManager.tsx            社員名リスト管理UI（レガシー）
+    EmployeeManager.tsx            社員名リスト管理UI
   lib/
-    auth.ts                        現在ユーザー取得・ロール判定・ページ/API用の認可ヘルパー
-    supabaseServer.ts / supabaseBrowser.ts  RLSが効くSupabaseクライアント（anon key）
+    adminAuth.ts                   管理者パスワード照合・セッショントークンの署名/検証
+    requireAdmin.ts                管理者セッションCookieの確認ヘルパー（isAdminRequest）
     supabaseAdmin.ts                Supabase サーバークライアント（service role、RLSバイパス）
     reservationStatus.ts           予約・車両のステータス遷移ルール
     auditLog.ts                    監査ログ書き込みヘルパー
+    lastEmployeeName.ts            「自分の予約」用に使用者名をブラウザへ記憶するヘルパー
     vehicles.ts                    車両データ取得
     notifications/                 通知プロバイダーのインターフェース・outbox・登録
     types.ts / mappers.ts          型定義・DB(snake_case)⇔アプリ内(camelCase)の変換
@@ -252,14 +235,13 @@ src/
 supabase/
   schema.sql                       テーブル定義（Supabase SQL Editorで実行、フェーズごとにコメントで区切り）
 e2e/
-  public-pages.spec.ts             Playwrightのスモークテスト（認証不要ページのみ）
+  public-pages.spec.ts             Playwrightのスモークテスト
 ```
 
 ### 将来の拡張を見据えた設計
 
 - **Googleカレンダー連携**: `src/lib/data.ts` と `src/app/api/reservations/*` がデータアクセスの唯一の入口になっているため、将来カレンダー同期を追加する場合はこの層にフックを足すだけで済みます（UIコンポーネント側の変更は不要）。
 - **複数車両対応**: `reservations` テーブルに `vehicle_id` カラムを足し、重複チェックのクエリに `vehicle_id` の絞り込みを1行追加するだけで対応できる構成にしています。
-- **本格的な社員ログイン**: 現在は社員名をテキストとして保存していますが、`employees` テーブルが既に存在するため、将来的に `employee_id` の外部キーへ差し替えることも容易です。
 
 ---
 
@@ -330,12 +312,11 @@ constraint no_overlapping_reservations exclude using gist (
 
 予約は物理削除せず、`status='cancelled'`への更新として扱います（過去の記録は残ります）。`DELETE /api/reservations/[id]` は内部的にこのキャンセル処理を行うエンドポイント名として残しています。
 
-- **予約した本人**（`owner_user_id`が自分のもの）: 開始前（`status='reserved'`）の自分の予約に限り、変更・キャンセルができます。開始後は変更・キャンセルできません。
-- **管理者（`vehicle_manager`以上）**: どの予約でも変更・キャンセルできます。開始後の予約を訂正する場合、または誰かの予約をキャンセルする場合は、理由の入力が必須です。訂正・キャンセルの内容（変更前後・理由・実行者）は監査ログ（`audit_logs`）に記録されます。
-- **移行前のレガシー予約**（`owner_user_id`が未割当）: 本人確認の手段がないため、`vehicle_manager`以上のみが変更・割当を行えます（旧`employee_name`による自己申告でのキャンセルのみ、互換性維持のため許可）。
-- **他人の予約**: 一般社員が自分以外の予約を変更・キャンセルしようとした場合は、サーバー側で`owner_user_id`と突き合わせて`403`を返し拒否します（[`src/app/api/reservations/[id]/route.ts`](<src/app/api/reservations/[id]/route.ts>)）。
+- **予約した本人**: ログイン機能がないため、予約時の使用者名（`employee_name`）と同じ名前を自己申告（送信）した場合のみ、開始前（`status='reserved'`）の自分の予約に限り変更・キャンセルができます。開始後は変更・キャンセルできません。
+- **管理者（`/admin`に共有パスワードでログイン中）**: どの予約でも変更・キャンセルできます。開始後の予約を訂正する場合、または誰かの予約をキャンセルする場合は、理由の入力が必須です。訂正・キャンセルの内容（変更前後・理由）は監査ログ（`audit_logs`）に記録されます。
+- **他人の予約**: 自分以外の名前で変更・キャンセルしようとした場合は、サーバー側で`employee_name`と突き合わせて`403`を返し拒否します（[`src/app/api/reservations/[id]/route.ts`](<src/app/api/reservations/[id]/route.ts>)）。
 
-自己申告ベースの本人確認であり、他人の名前を偽って選択すれば技術的には削除できてしまいますが、これは予約登録・変更時に誰でも任意の使用者名を選べる現在の設計と同じ信頼レベルであり、社内10名程度の運用における実用上の割り切りです。より厳密にしたい場合は、`requesterName` による自己申告を実際の社員ログイン（将来的な拡張）に置き換えるだけで済むよう、判定ロジックは API ルート1箇所（`DELETE` ハンドラ）にまとまっています。
+自己申告ベースの本人確認であり、他人の名前を偽って選択すれば技術的には変更・キャンセルできてしまいますが、これは予約登録時に誰でも任意の使用者名を選べる現在の設計と同じ信頼レベルであり、社内10名程度の運用における実用上の割り切りです。
 
 ---
 

@@ -2,16 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { AppUser } from "@/lib/types";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { LogoutButton } from "./LogoutButton";
 import { useI18n } from "./LocaleProvider";
 
-interface HeaderProps {
-  currentUser: AppUser | null;
-}
-
-export function Header({ currentUser }: HeaderProps) {
+export function Header() {
   const { dict } = useI18n();
   const pathname = usePathname();
 
@@ -19,8 +13,6 @@ export function Header({ currentUser }: HeaderProps) {
   if (pathname === "/") {
     return null;
   }
-
-  const isManager = currentUser?.role === "vehicle_manager" || currentUser?.role === "system_admin";
 
   return (
     <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
@@ -50,7 +42,6 @@ export function Header({ currentUser }: HeaderProps) {
           </Link>
           <div className="flex shrink-0 items-center gap-2">
             <LanguageSwitcher />
-            {currentUser && <LogoutButton />}
           </div>
         </div>
         <nav className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] font-semibold sm:gap-x-5 sm:text-[13px]">
@@ -60,19 +51,12 @@ export function Header({ currentUser }: HeaderProps) {
           <Link href="/reservations" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
             {dict.nav.reservations}
           </Link>
-          {isManager && (
-            <Link href="/admin" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
-              {dict.nav.admin}
-            </Link>
-          )}
+          <Link href="/admin" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
+            {dict.nav.admin}
+          </Link>
           <Link href="/guide" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
             {dict.nav.guide}
           </Link>
-          {currentUser && (
-            <span className="ml-auto truncate text-[11px] font-normal text-gray-400">
-              {currentUser.displayName}
-            </span>
-          )}
         </nav>
       </div>
     </header>

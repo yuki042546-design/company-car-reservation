@@ -12,8 +12,6 @@ interface VehicleStatusBannerProps {
   vehicle: Vehicle;
   currentUsage: Reservation | null;
   nextReservation: Reservation | null;
-  currentUserId: string;
-  isManager: boolean;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -27,8 +25,6 @@ export function VehicleStatusBanner({
   vehicle,
   currentUsage,
   nextReservation,
-  currentUserId,
-  isManager,
 }: VehicleStatusBannerProps) {
   const { dict, locale } = useI18n();
   const router = useRouter();
@@ -46,7 +42,7 @@ export function VehicleStatusBanner({
           ? dict.vehicleStatus.maintenance
           : dict.vehicleStatus.outOfService;
 
-  const canOperate = !!currentUsage && (isManager || currentUsage.ownerUserId === currentUserId);
+  const canOperate = !!currentUsage;
 
   async function callAction(action: string, payload: Record<string, unknown> = {}) {
     if (!currentUsage) return;
@@ -104,8 +100,7 @@ export function VehicleStatusBanner({
     }
   }
 
-  const canDepartNext =
-    !!nextReservation && (isManager || nextReservation.ownerUserId === currentUserId);
+  const canDepartNext = !!nextReservation;
 
   return (
     <div className={`rounded-xl border p-4 shadow-sm ${STATUS_STYLES[vehicle.status] ?? "bg-white"}`}>
