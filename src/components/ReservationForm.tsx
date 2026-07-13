@@ -11,6 +11,7 @@ import {
   minutesBetweenDatetimeLocal,
   nextSlotDatetimeLocal,
   splitDatetimeLocal,
+  START_TIME_SLOT_OPTIONS,
 } from "@/lib/dateUtils";
 import { validateReservationInput } from "@/lib/reservationRules";
 import { rememberEmployeeName } from "@/lib/lastEmployeeName";
@@ -45,8 +46,17 @@ interface ReservationFormProps {
 
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+// 開始日時プルダウンは8:00〜18:00のみのため、現在時刻がその範囲外の場合は
+// 選択肢の範囲内（始業/終業時刻）にクランプする。
+function clampToStartTimeRange(value: string): string {
+  const { date, time } = splitDatetimeLocal(value);
+  if (time < "08:00") return combineDatetimeLocal(date, "08:00");
+  if (time > "18:00") return combineDatetimeLocal(date, "18:00");
+  return value;
+}
+
 function defaultStart(initialDate?: string): string {
-  const base = nextSlotDatetimeLocal();
+  const base = clampToStartTimeRange(nextSlotDatetimeLocal());
   if (initialDate && DATE_ONLY_PATTERN.test(initialDate)) {
     const { time } = splitDatetimeLocal(base);
     return combineDatetimeLocal(initialDate, time);
@@ -82,6 +92,15 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
     }
     return employees;
   }, [employees, initial]);
+
+  // 開始日時プルダウンは8:00〜18:00のみだが、それ以外の時刻の既存予約（レガシー予約・
+  // 管理者による変則的な予約）を編集する場合も、現在の値を選択肢に含めておく。
+  const startTimeOptions = useMemo(() => {
+    if (!initial) return START_TIME_SLOT_OPTIONS;
+    const { time } = splitDatetimeLocal(isoToDatetimeLocal(initial.startTime));
+    if (START_TIME_SLOT_OPTIONS.includes(time)) return START_TIME_SLOT_OPTIONS;
+    return [...START_TIME_SLOT_OPTIONS, time].sort();
+  }, [initial]);
 
   const [employeeName, setEmployeeName] = useState(initial?.employeeName ?? employees[0]?.name ?? "");
   const [startTime, setStartTime] = useState(
@@ -192,6 +211,8 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
         value={startTime}
         onChange={setStartTime}
         required
+        timeOptions={startTimeOptions}
+        variant="large"
       />
 
       <DurationSelect

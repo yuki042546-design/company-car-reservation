@@ -17,6 +17,7 @@ const ja = {
     appName: "社用車予約",
     top: "トップ",
     reservations: "予約一覧",
+    newReservation: "新規予約",
     admin: "管理者",
     guide: "使い方",
   },

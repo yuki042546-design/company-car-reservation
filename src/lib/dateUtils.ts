@@ -194,6 +194,9 @@ export const TIME_SLOT_OPTIONS: string[] = Array.from({ length: 48 }, (_, i) => 
   return `${String(hour).padStart(2, "0")}:${minute}`;
 });
 
+/** "08:00" から "18:00" までの30分刻みの時刻文字列一覧（開始日時プルダウン用） */
+export const START_TIME_SLOT_OPTIONS: string[] = TIME_SLOT_OPTIONS.filter((t) => t >= "08:00" && t <= "18:00");
+
 /** datetime-local value ("YYYY-MM-DDTHH:mm") を日付部分と時刻部分に分割する */
 export function splitDatetimeLocal(value: string): { date: string; time: string } {
   const [date, time] = value.split("T");

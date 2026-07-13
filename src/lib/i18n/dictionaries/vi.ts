@@ -18,6 +18,7 @@ const vi: Dictionary = {
     appName: "Đặt xe công ty",
     top: "Trang chủ",
     reservations: "Lịch xe",
+    newReservation: "Đặt xe mới",
     admin: "Quản trị",
     guide: "Hướng dẫn",
   },

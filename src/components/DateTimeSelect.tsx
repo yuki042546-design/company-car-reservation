@@ -9,6 +9,10 @@ interface DateTimeSelectProps {
   onChange: (value: string) => void;
   required?: boolean;
   helperText?: string;
+  /** プルダウンに表示する時刻の選択肢（省略時は00:00〜23:30の30分刻み全体） */
+  timeOptions?: string[];
+  /** "large" 指定時はカレンダー（日付入力）を縦積み・大きめの表示にする */
+  variant?: "default" | "large";
 }
 
 function todayDateStr(): string {
@@ -18,8 +22,18 @@ function todayDateStr(): string {
 // カレンダーによる日付選択 + 30分刻みのプルダウンによる時刻選択を組み合わせた入力。
 // 内部的には ReservationForm が扱う datetime-local 形式 ("YYYY-MM-DDTHH:mm") の
 // 文字列をそのまま入出力するため、既存の datetimeLocalToIso 等はそのまま使える。
-export function DateTimeSelect({ id, label, value, onChange, required, helperText }: DateTimeSelectProps) {
+export function DateTimeSelect({
+  id,
+  label,
+  value,
+  onChange,
+  required,
+  helperText,
+  timeOptions = TIME_SLOT_OPTIONS,
+  variant = "default",
+}: DateTimeSelectProps) {
   const { date, time } = splitDatetimeLocal(value);
+  const isLarge = variant === "large";
 
   function handleDateChange(newDate: string) {
     onChange(combineDatetimeLocal(newDate, time || "00:00"));
@@ -34,14 +48,18 @@ export function DateTimeSelect({ id, label, value, onChange, required, helperTex
       <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor={`${id}-date`}>
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <div className="flex gap-2">
+      <div className={isLarge ? "space-y-2" : "flex gap-2"}>
         <input
           id={`${id}-date`}
           type="date"
           value={date}
           min={todayDateStr()}
           onChange={(e) => handleDateChange(e.target.value)}
-          className="w-[58%] min-w-0 rounded-lg border border-gray-300 px-3 py-2.5"
+          className={
+            isLarge
+              ? "w-full min-w-0 rounded-lg border border-gray-300 px-4 py-4 text-lg"
+              : "w-[58%] min-w-0 rounded-lg border border-gray-300 px-3 py-2.5"
+          }
           required={required}
         />
         <select
@@ -49,10 +67,14 @@ export function DateTimeSelect({ id, label, value, onChange, required, helperTex
           aria-label={label}
           value={time}
           onChange={(e) => handleTimeChange(e.target.value)}
-          className="w-[42%] min-w-0 rounded-lg border border-gray-300 px-2 py-2.5"
+          className={
+            isLarge
+              ? "w-full min-w-0 rounded-lg border border-gray-300 px-3 py-3 text-base"
+              : "w-[42%] min-w-0 rounded-lg border border-gray-300 px-2 py-2.5"
+          }
           required={required}
         >
-          {TIME_SLOT_OPTIONS.map((t) => (
+          {timeOptions.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>

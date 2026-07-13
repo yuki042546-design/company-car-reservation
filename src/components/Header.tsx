@@ -51,6 +51,9 @@ export function Header() {
           <Link href="/reservations" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
             {dict.nav.reservations}
           </Link>
+          <Link href="/reservations/new" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
+            {dict.nav.newReservation}
+          </Link>
           <Link href="/admin" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
             {dict.nav.admin}
           </Link>
