@@ -11,7 +11,7 @@ interface DateTimeSelectProps {
   helperText?: string;
   /** プルダウンに表示する時刻の選択肢（省略時は00:00〜23:30の30分刻み全体） */
   timeOptions?: string[];
-  /** "large" 指定時はカレンダー（日付入力）を縦積み・大きめの表示にする */
+  /** "large" 指定時はカレンダーアイコン（タップするとポップアップが開く部分）を大きめに表示する */
   variant?: "default" | "large";
 }
 
@@ -48,7 +48,7 @@ export function DateTimeSelect({
       <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor={`${id}-date`}>
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <div className={isLarge ? "space-y-2" : "flex gap-2"}>
+      <div className="flex gap-2">
         <input
           id={`${id}-date`}
           type="date"
@@ -57,7 +57,7 @@ export function DateTimeSelect({
           onChange={(e) => handleDateChange(e.target.value)}
           className={
             isLarge
-              ? "w-full min-w-0 rounded-lg border border-gray-300 px-4 py-4 text-lg"
+              ? "w-[58%] min-w-0 rounded-lg border border-gray-300 px-3 py-2.5 [&::-webkit-calendar-picker-indicator]:h-6 [&::-webkit-calendar-picker-indicator]:w-6 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:scale-150"
               : "w-[58%] min-w-0 rounded-lg border border-gray-300 px-3 py-2.5"
           }
           required={required}
@@ -67,11 +67,7 @@ export function DateTimeSelect({
           aria-label={label}
           value={time}
           onChange={(e) => handleTimeChange(e.target.value)}
-          className={
-            isLarge
-              ? "w-full min-w-0 rounded-lg border border-gray-300 px-3 py-3 text-base"
-              : "w-[42%] min-w-0 rounded-lg border border-gray-300 px-2 py-2.5"
-          }
+          className="w-[42%] min-w-0 rounded-lg border border-gray-300 px-2 py-2.5"
           required={required}
         >
           {timeOptions.map((t) => (
