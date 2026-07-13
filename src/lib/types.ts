@@ -69,6 +69,45 @@ export interface Vehicle {
   updatedAt: string;
 }
 
+export interface VehicleUsageRecord {
+  id: string;
+  reservationId: string;
+  vehicleId: string;
+  checkedOutAt: string | null;
+  returnedAt: string | null;
+  departureOdometer: number | null;
+  returnOdometer: number | null;
+  fuelLevelAtDeparture: number | null;
+  fuelLevelAtReturn: number | null;
+  refueled: boolean;
+  issueReported: boolean;
+  issueDescription: string | null;
+  interiorCondition: string | null;
+  damageReported: boolean;
+  damageDescription: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 利用履歴の1行分。vehicle_usage_records（出発・返却の実績）と
+ * reservations（使用者名・目的地）を突き合わせた表示用の型。
+ * durationMinutes/mileageKm は実際の出発・返却時刻/走行距離から計算する
+ * （どちらかが未入力ならnull）。
+ */
+export interface UsageHistoryEntry {
+  id: string;
+  employeeName: string;
+  destination: string;
+  checkedOutAt: string | null;
+  returnedAt: string | null;
+  durationMinutes: number | null;
+  departureOdometer: number | null;
+  returnOdometer: number | null;
+  mileageKm: number | null;
+}
+
 export interface AppSettings {
   bookingHorizonDays: number;
   normalMaxDurationMinutes: number;

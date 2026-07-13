@@ -4,6 +4,7 @@ import {
   getMaintenanceBlocks,
   getRecentReservations,
   getReservationLogs,
+  getUsageHistory,
 } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -15,6 +16,7 @@ import { AdminLogoutButton } from "@/components/AdminLogoutButton";
 import { AdminMaintenanceManager } from "@/components/AdminMaintenanceManager";
 import { AdminOperationHistory } from "@/components/AdminOperationHistory";
 import { AdminReservationList } from "@/components/AdminReservationList";
+import { AdminUsageHistory } from "@/components/AdminUsageHistory";
 import { EmployeeManager } from "@/components/EmployeeManager";
 
 export const dynamic = "force-dynamic";
@@ -34,13 +36,14 @@ export default async function AdminPage() {
 
   const locale = getLocale();
 
-  const [reservations, employees, logs, auditLogs, maintenanceBlocks, vehicle] = await Promise.all([
+  const [reservations, employees, logs, auditLogs, maintenanceBlocks, vehicle, usageHistory] = await Promise.all([
     getRecentReservations(),
     getAllEmployees(),
     getReservationLogs(),
     getAuditLogs(),
     getMaintenanceBlocks(),
     getDefaultVehicle(),
+    getUsageHistory(),
   ]);
 
   return (
@@ -66,6 +69,11 @@ export default async function AdminPage() {
           <AdminMaintenanceManager vehicleId={vehicle.id} blocks={maintenanceBlocks} />
         </section>
       )}
+
+      <section>
+        <h2 className="mb-3 text-lg font-bold tracking-tight text-gray-900">{dict.admin.usageHistorySectionTitle}</h2>
+        <AdminUsageHistory entries={usageHistory} dict={dict} locale={locale} />
+      </section>
 
       <section>
         <h2 className="mb-3 text-lg font-bold tracking-tight text-gray-900">{dict.admin.historySectionTitle}</h2>

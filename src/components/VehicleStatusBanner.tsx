@@ -30,6 +30,8 @@ export function VehicleStatusBanner({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [departureOdometer, setDepartureOdometer] = useState("");
+  const [returnOdometer, setReturnOdometer] = useState("");
 
   const statusLabel =
     vehicle.status === "available"
@@ -68,7 +70,9 @@ export function VehicleStatusBanner({
   }
 
   async function handleReturn() {
-    await callAction("return");
+    await callAction("return", {
+      returnOdometer: returnOdometer.trim() ? Number(returnOdometer) : undefined,
+    });
   }
 
   async function handleExtend() {
@@ -85,7 +89,10 @@ export function VehicleStatusBanner({
       const res = await fetch(`/api/reservations/${nextReservation.id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "depart" }),
+        body: JSON.stringify({
+          action: "depart",
+          departureOdometer: departureOdometer.trim() ? Number(departureOdometer) : undefined,
+        }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -126,21 +133,34 @@ export function VehicleStatusBanner({
             {displayDestination(currentUsage, locale)}
           </p>
           {canOperate && (
-            <div className="mt-3 flex gap-2">
-              <button
-                onClick={handleReturn}
-                disabled={busy}
-                className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-              >
-                {dict.action.returnButton}
-              </button>
-              <button
-                onClick={handleExtend}
-                disabled={busy}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-              >
-                {dict.action.extendButton}
-              </button>
+            <div className="mt-3 space-y-2">
+              <label className="flex items-center gap-2 text-xs text-gray-500">
+                {dict.action.returnOdometerLabel}
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={returnOdometer}
+                  onChange={(e) => setReturnOdometer(e.target.value)}
+                  className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900"
+                />
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleReturn}
+                  disabled={busy}
+                  className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+                >
+                  {dict.action.returnButton}
+                </button>
+                <button
+                  onClick={handleExtend}
+                  disabled={busy}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {dict.action.extendButton}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -153,13 +173,26 @@ export function VehicleStatusBanner({
                 {formatDateTime(nextReservation.startTime, locale)} ・ {nextReservation.employeeName}
               </p>
               {canDepartNext && (
-                <button
-                  onClick={handleDepart}
-                  disabled={busy}
-                  className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
-                >
-                  {dict.action.departButton}
-                </button>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-xs text-gray-500">
+                    {dict.action.departureOdometerLabel}
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      value={departureOdometer}
+                      onChange={(e) => setDepartureOdometer(e.target.value)}
+                      className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900"
+                    />
+                  </label>
+                  <button
+                    onClick={handleDepart}
+                    disabled={busy}
+                    className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+                  >
+                    {dict.action.departButton}
+                  </button>
+                </div>
               )}
             </div>
           ) : (

@@ -7,6 +7,7 @@ import {
   mapReservationLogRow,
   mapReservationRow,
   mapUserRow,
+  mapVehicleUsageRecordRow,
   type AppSettingsRow,
   type AuditLogRow,
   type EmployeeRow,
@@ -14,8 +15,18 @@ import {
   type ReservationLogRow,
   type ReservationRow,
   type UserRow,
+  type VehicleUsageRecordRow,
 } from "./mappers";
-import type { AppSettings, AppUser, AuditLog, Employee, MaintenanceBlock, Reservation, ReservationLog } from "./types";
+import type {
+  AppSettings,
+  AppUser,
+  AuditLog,
+  Employee,
+  MaintenanceBlock,
+  Reservation,
+  ReservationLog,
+  UsageHistoryEntry,
+} from "./types";
 import { getThisWeekRangeJst, getTodayRangeJst } from "./dateUtils";
 
 // サーバーコンポーネント（page.tsx）から直接呼び出すデータ取得関数。
@@ -145,6 +156,59 @@ export async function getMaintenanceBlocks(): Promise<MaintenanceBlock[]> {
     .order("start_at", { ascending: false });
   if (error) throw error;
   return (data as MaintenanceBlockRow[]).map(mapMaintenanceBlockRow);
+}
+
+/**
+ * 実際の利用履歴（出発・返却が完了した分のみ）。vehicle_usage_records（走行距離・
+ * 出発/返却時刻）と reservations（使用者名・目的地）を突き合わせて1件ずつにまとめる。
+ * 埋め込みJOINは使わず、2回に分けて問い合わせてアプリ側で結合する（シンプルさ優先）。
+ */
+export async function getUsageHistory(limit = 200): Promise<UsageHistoryEntry[]> {
+  const supabase = getSupabaseAdmin();
+
+  const { data: records, error: recordsError } = await supabase
+    .from("vehicle_usage_records")
+    .select("*")
+    .not("returned_at", "is", null)
+    .order("returned_at", { ascending: false })
+    .limit(limit);
+  if (recordsError) throw recordsError;
+
+  const usageRecords = (records as VehicleUsageRecordRow[]).map(mapVehicleUsageRecordRow);
+  if (usageRecords.length === 0) return [];
+
+  const reservationIds = usageRecords.map((r) => r.reservationId);
+  const { data: reservationRows, error: reservationsError } = await supabase
+    .from("reservations")
+    .select("id, employee_name, destination")
+    .in("id", reservationIds);
+  if (reservationsError) throw reservationsError;
+
+  const reservationById = new Map((reservationRows as { id: string; employee_name: string; destination: string }[]).map((r) => [r.id, r]));
+
+  return usageRecords.map((record) => {
+    const reservation = reservationById.get(record.reservationId);
+    const durationMinutes =
+      record.checkedOutAt && record.returnedAt
+        ? Math.round((new Date(record.returnedAt).getTime() - new Date(record.checkedOutAt).getTime()) / 60000)
+        : null;
+    const mileageKm =
+      record.departureOdometer !== null && record.returnOdometer !== null
+        ? record.returnOdometer - record.departureOdometer
+        : null;
+
+    return {
+      id: record.id,
+      employeeName: reservation?.employee_name ?? "",
+      destination: reservation?.destination ?? "",
+      checkedOutAt: record.checkedOutAt,
+      returnedAt: record.returnedAt,
+      durationMinutes,
+      departureOdometer: record.departureOdometer,
+      returnOdometer: record.returnOdometer,
+      mileageKm,
+    };
+  });
 }
 
 export async function getAuditLogs(limit = 200): Promise<AuditLog[]> {

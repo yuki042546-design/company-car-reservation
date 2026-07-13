@@ -18,6 +18,7 @@ const ja = {
     top: "トップ",
     reservations: "予約一覧",
     newReservation: "新規予約",
+    vehicleInfo: "車両情報",
     admin: "管理者",
     guide: "使い方",
   },
@@ -182,6 +183,26 @@ const ja = {
     networkError: "通信エラーが発生しました。",
     confirmCancel: "この整備・利用停止予定をキャンセルします。よろしいですか？",
   },
+  vehicleInfo: {
+    pageTitle: "車両情報",
+    empty: "登録されている車両はありません。",
+    notSet: "未設定",
+    plateNumberLabel: "ナンバー",
+    modelLabel: "車種",
+    parkingLocationLabel: "駐車位置",
+    keyLocationLabel: "鍵の保管場所",
+    etcCardLocationLabel: "ETCカードの保管場所",
+    fuelCardLocationLabel: "給油カードの保管場所",
+    emergencyContactLabel: "緊急連絡先",
+    insuranceContactLabel: "保険会社の連絡先",
+    roadsideAssistanceContactLabel: "ロードサービス連絡先",
+    inspectionDueDateLabel: "車検期限",
+    insuranceDueDateLabel: "保険期限",
+    nextServiceDueDateLabel: "次回点検予定日",
+    oilChangeDueDateLabel: "オイル交換予定日",
+    tireChangeDueDateLabel: "タイヤ交換予定日",
+    notesLabel: "備考",
+  },
   vehicleStatus: {
     statusLabels: {
       reserved: "予約済み",
@@ -211,6 +232,8 @@ const ja = {
     departButton: "出発する",
     returnButton: "返却する",
     extendButton: "延長する",
+    departureOdometerLabel: "出発時の走行距離(km):",
+    returnOdometerLabel: "返却時の走行距離(km):",
     reportIssueButton: "異常を報告",
     invalidTransition: "この操作は現在の状態では実行できません。",
     invalidExtension: "延長できません（すでに次の予約が入っている可能性があります）。",
@@ -265,6 +288,19 @@ const ja = {
     auditLogColumnAction: "操作",
     auditLogColumnTarget: "対象",
     auditLogColumnReason: "理由",
+    usageHistorySectionTitle: "利用履歴",
+    usageHistoryEmpty: "利用履歴はまだありません。",
+    usageHistoryColumnDate: "返却日時",
+    usageHistoryColumnEmployee: "使用者名",
+    usageHistoryColumnDuration: "利用時間",
+    usageHistoryColumnMileage: "走行距離",
+    usageHistoryColumnDestination: "目的地",
+    usageHistoryDurationMinutes: (minutes: number) => {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return hours > 0 ? `${hours}時間${mins}分` : `${mins}分`;
+    },
+    usageHistoryMileageKm: (km: number) => `${km}km`,
   },
   userManager: {
     roleLabels: {

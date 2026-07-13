@@ -14,6 +14,7 @@ import type {
   Role,
   Vehicle,
   VehicleStatus,
+  VehicleUsageRecord,
 } from "./types";
 
 // Supabase (snake_case) の行を、アプリ内で使う camelCase の型に変換する。
@@ -217,6 +218,50 @@ export function mapMaintenanceBlockRow(row: MaintenanceBlockRow): MaintenanceBlo
     reason: row.reason,
     status: row.status,
     createdByUserId: row.created_by_user_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export interface VehicleUsageRecordRow {
+  id: string;
+  reservation_id: string;
+  vehicle_id: string;
+  checked_out_at: string | null;
+  returned_at: string | null;
+  departure_odometer: number | null;
+  return_odometer: number | null;
+  fuel_level_at_departure: number | null;
+  fuel_level_at_return: number | null;
+  refueled: boolean;
+  issue_reported: boolean;
+  issue_description: string | null;
+  interior_condition: string | null;
+  damage_reported: boolean;
+  damage_description: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function mapVehicleUsageRecordRow(row: VehicleUsageRecordRow): VehicleUsageRecord {
+  return {
+    id: row.id,
+    reservationId: row.reservation_id,
+    vehicleId: row.vehicle_id,
+    checkedOutAt: row.checked_out_at,
+    returnedAt: row.returned_at,
+    departureOdometer: row.departure_odometer,
+    returnOdometer: row.return_odometer,
+    fuelLevelAtDeparture: row.fuel_level_at_departure,
+    fuelLevelAtReturn: row.fuel_level_at_return,
+    refueled: row.refueled,
+    issueReported: row.issue_reported,
+    issueDescription: row.issue_description,
+    interiorCondition: row.interior_condition,
+    damageReported: row.damage_reported,
+    damageDescription: row.damage_description,
+    notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

@@ -19,6 +19,7 @@ const vi: Dictionary = {
     top: "Trang chủ",
     reservations: "Lịch xe",
     newReservation: "Đặt xe mới",
+    vehicleInfo: "Thông tin xe",
     admin: "Quản trị",
     guide: "Hướng dẫn",
   },
@@ -183,6 +184,26 @@ const vi: Dictionary = {
     networkError: "Đã xảy ra lỗi kết nối.",
     confirmCancel: "Bạn có chắc chắn muốn hủy lịch bảo trì / ngừng sử dụng này không?",
   },
+  vehicleInfo: {
+    pageTitle: "Thông tin xe",
+    empty: "Chưa có xe nào được đăng ký.",
+    notSet: "Chưa thiết lập",
+    plateNumberLabel: "Biển số",
+    modelLabel: "Dòng xe",
+    parkingLocationLabel: "Vị trí đỗ xe",
+    keyLocationLabel: "Nơi cất chìa khóa",
+    etcCardLocationLabel: "Nơi cất thẻ ETC",
+    fuelCardLocationLabel: "Nơi cất thẻ nhiên liệu",
+    emergencyContactLabel: "Liên hệ khẩn cấp",
+    insuranceContactLabel: "Liên hệ bảo hiểm",
+    roadsideAssistanceContactLabel: "Liên hệ cứu hộ",
+    inspectionDueDateLabel: "Hạn đăng kiểm",
+    insuranceDueDateLabel: "Hạn bảo hiểm",
+    nextServiceDueDateLabel: "Ngày bảo dưỡng tiếp theo",
+    oilChangeDueDateLabel: "Ngày thay dầu dự kiến",
+    tireChangeDueDateLabel: "Ngày thay lốp dự kiến",
+    notesLabel: "Ghi chú",
+  },
   vehicleStatus: {
     statusLabels: {
       reserved: "Đã đặt",
@@ -212,6 +233,8 @@ const vi: Dictionary = {
     departButton: "Bắt đầu đi",
     returnButton: "Trả xe",
     extendButton: "Gia hạn",
+    departureOdometerLabel: "Số km khi xuất phát:",
+    returnOdometerLabel: "Số km khi trả xe:",
     reportIssueButton: "Báo cáo sự cố",
     invalidTransition: "Không thể thực hiện thao tác này ở trạng thái hiện tại.",
     invalidExtension: "Không thể gia hạn (có thể đã có lịch đặt xe kế tiếp).",
@@ -266,6 +289,19 @@ const vi: Dictionary = {
     auditLogColumnAction: "Thao tác",
     auditLogColumnTarget: "Đối tượng",
     auditLogColumnReason: "Lý do",
+    usageHistorySectionTitle: "Lịch sử sử dụng",
+    usageHistoryEmpty: "Chưa có lịch sử sử dụng nào.",
+    usageHistoryColumnDate: "Ngày trả xe",
+    usageHistoryColumnEmployee: "Người sử dụng",
+    usageHistoryColumnDuration: "Thời gian sử dụng",
+    usageHistoryColumnMileage: "Quãng đường",
+    usageHistoryColumnDestination: "Điểm đến",
+    usageHistoryDurationMinutes: (minutes: number) => {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return hours > 0 ? `${hours} giờ ${mins} phút` : `${mins} phút`;
+    },
+    usageHistoryMileageKm: (km: number) => `${km}km`,
   },
   userManager: {
     roleLabels: {
