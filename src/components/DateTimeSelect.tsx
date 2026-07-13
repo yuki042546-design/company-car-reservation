@@ -11,8 +11,6 @@ interface DateTimeSelectProps {
   helperText?: string;
   /** プルダウンに表示する時刻の選択肢（省略時は00:00〜23:30の30分刻み全体） */
   timeOptions?: string[];
-  /** "large" 指定時はカレンダーアイコン（タップするとポップアップが開く部分）を大きめに表示する */
-  variant?: "default" | "large";
 }
 
 function todayDateStr(): string {
@@ -30,10 +28,8 @@ export function DateTimeSelect({
   required,
   helperText,
   timeOptions = TIME_SLOT_OPTIONS,
-  variant = "default",
 }: DateTimeSelectProps) {
   const { date, time } = splitDatetimeLocal(value);
-  const isLarge = variant === "large";
 
   function handleDateChange(newDate: string) {
     onChange(combineDatetimeLocal(newDate, time || "00:00"));
@@ -55,11 +51,7 @@ export function DateTimeSelect({
           value={date}
           min={todayDateStr()}
           onChange={(e) => handleDateChange(e.target.value)}
-          className={
-            isLarge
-              ? "w-[58%] min-w-0 rounded-lg border border-gray-300 px-3 py-2.5 [&::-webkit-calendar-picker-indicator]:h-6 [&::-webkit-calendar-picker-indicator]:w-6 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:scale-150"
-              : "w-[58%] min-w-0 rounded-lg border border-gray-300 px-3 py-2.5"
-          }
+          className="w-[58%] min-w-0 rounded-lg border border-gray-300 px-3 py-2.5"
           required={required}
         />
         <select

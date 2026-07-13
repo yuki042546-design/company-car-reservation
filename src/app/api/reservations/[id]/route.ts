@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 
   const settings = await getAppSettings();
-  const limits = limitsFromAppSettings(settings, isManager);
+  const limits = limitsFromAppSettings(settings);
   const validation = validateReservationInput(body, dict, new Date(), limits);
   if (!validation.valid) {
     return NextResponse.json({ errors: validation.errors }, { status: 400 });

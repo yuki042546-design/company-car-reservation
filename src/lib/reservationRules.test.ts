@@ -9,7 +9,6 @@ import type { ReservationInput } from "./types";
 // （オフセットなしの文字列はテスト実行環境のローカルタイムゾーンに依存してしまうため避ける）。
 const LIMITS: ReservationRuleLimits = {
   minDurationMinutes: 30,
-  maxDurationMinutes: 240,
   bookingHorizonDays: 90,
 };
 
@@ -83,24 +82,12 @@ describe("validateReservationInput", () => {
     expect(result.valid).toBe(false);
   });
 
-  it("rejects durations longer than the configured maximum", () => {
+  it("allows durations longer than the old 4-hour cap (no upper limit)", () => {
     const result = validateReservationInput(
-      makeInput({ startTime: "2026-07-11T09:00:00+09:00", endTime: "2026-07-11T14:00:00+09:00" }),
+      makeInput({ startTime: "2026-07-11T09:00:00+09:00", endTime: "2026-07-12T09:00:00+09:00" }),
       ja,
       NOW,
       LIMITS
-    );
-    expect(result.valid).toBe(false);
-    expect(result.errors).toContain(ja.validation.tooLong);
-  });
-
-  it("allows a longer duration when the manager limit is passed in", () => {
-    const managerLimits: ReservationRuleLimits = { ...LIMITS, maxDurationMinutes: 480 };
-    const result = validateReservationInput(
-      makeInput({ startTime: "2026-07-11T09:00:00+09:00", endTime: "2026-07-11T14:00:00+09:00" }),
-      ja,
-      NOW,
-      managerLimits
     );
     expect(result.valid).toBe(true);
   });

@@ -212,7 +212,6 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
         onChange={setStartTime}
         required
         timeOptions={startTimeOptions}
-        variant="large"
       />
 
       <DurationSelect

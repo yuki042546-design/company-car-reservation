@@ -4,7 +4,6 @@ import { mapReservationRow, type ReservationRow } from "@/lib/mappers";
 import { limitsFromAppSettings, validateReservationInput } from "@/lib/reservationRules";
 import { isExclusionViolation } from "@/lib/overlapCheck";
 import { getAppSettings } from "@/lib/data";
-import { isAdminRequest } from "@/lib/requireAdmin";
 import { getDefaultVehicle } from "@/lib/vehicles";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
   }
 
   const settings = await getAppSettings();
-  const limits = limitsFromAppSettings(settings, isAdminRequest());
+  const limits = limitsFromAppSettings(settings);
 
   const validation = validateReservationInput(body, dict, new Date(), limits);
   if (!validation.valid) {

@@ -3,9 +3,7 @@ import type { AppSettings, ReservationInput } from "./types";
 
 export const SLOT_MINUTES = 30;
 // 以下はDB/管理設定が取得できない場合のフォールバック値。
-// 実際の上限は system_admin が管理画面（app_settings）で変更できる。
 export const DEFAULT_MIN_DURATION_MINUTES = 30;
-export const DEFAULT_MAX_DURATION_MINUTES = 240; // 4時間
 export const DEFAULT_BOOKING_HORIZON_DAYS = 90;
 
 export interface ValidationResult {
@@ -19,22 +17,19 @@ function isOnSlotBoundary(date: Date): boolean {
 
 export interface ReservationRuleLimits {
   minDurationMinutes: number;
-  maxDurationMinutes: number;
   bookingHorizonDays: number;
 }
 
-/** app_settings から検証ルールの上限値を取り出す（isManager なら manager 用の上限を使う）。 */
-export function limitsFromAppSettings(settings: AppSettings, isManager: boolean): ReservationRuleLimits {
+/** app_settings から検証ルールの上限値を取り出す。使用時間の上限は設けていない。 */
+export function limitsFromAppSettings(settings: AppSettings): ReservationRuleLimits {
   return {
     minDurationMinutes: settings.minimumDurationMinutes,
-    maxDurationMinutes: isManager ? settings.managerMaxDurationMinutes : settings.normalMaxDurationMinutes,
     bookingHorizonDays: settings.bookingHorizonDays,
   };
 }
 
 const DEFAULT_LIMITS: ReservationRuleLimits = {
   minDurationMinutes: DEFAULT_MIN_DURATION_MINUTES,
-  maxDurationMinutes: DEFAULT_MAX_DURATION_MINUTES,
   bookingHorizonDays: DEFAULT_BOOKING_HORIZON_DAYS,
 };
 
@@ -97,9 +92,6 @@ export function validateReservationInput(
     const durationMinutes = (end.getTime() - start.getTime()) / 60000;
     if (durationMinutes < limits.minDurationMinutes) {
       errors.push(v.tooShort);
-    }
-    if (durationMinutes > limits.maxDurationMinutes) {
-      errors.push(v.tooLong);
     }
   }
 
