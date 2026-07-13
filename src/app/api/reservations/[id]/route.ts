@@ -204,19 +204,23 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
   const existing = mapReservationRow(existingRow as ReservationRow);
 
-  if (!isManager) {
-    const isOwner = !!body.requesterName && body.requesterName === existing.employeeName;
-    if (!isOwner) {
-      return NextResponse.json({ errors: [dict.apiErrors.notOwnerOrAdmin] }, { status: 403 });
-    }
+  // 自己申告名が一致する本人によるキャンセルを優先的に扱う（管理者セッションの
+  // Cookieがブラウザに残っていても、本人によるセルフサービス操作を妨げないため）。
+  const isSelfService = !!body.requesterName && body.requesterName === existing.employeeName;
+
+  if (isSelfService) {
     if (existing.status !== "reserved") {
       return NextResponse.json({ errors: [dict.apiErrors.reservationNotCancellable] }, { status: 409 });
     }
-  } else if (!body.cancellationReason?.trim()) {
-    return NextResponse.json({ errors: [dict.apiErrors.correctionReasonRequired] }, { status: 400 });
+  } else if (isManager) {
+    if (!body.cancellationReason?.trim()) {
+      return NextResponse.json({ errors: [dict.apiErrors.correctionReasonRequired] }, { status: 400 });
+    }
+  } else {
+    return NextResponse.json({ errors: [dict.apiErrors.notOwnerOrAdmin] }, { status: 403 });
   }
 
-  const { data, error } = await supabase
+  let updateQuery = supabase
     .from("reservations")
     .update({
       status: "cancelled",
@@ -224,10 +228,15 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       cancelled_at: new Date().toISOString(),
       cancelled_by_user_id: null,
     })
-    .eq("id", params.id)
-    .eq("status", "reserved")
-    .select("*")
-    .maybeSingle();
+    .eq("id", params.id);
+
+  // 本人によるセルフサービスキャンセルは開始前（reserved）のみ許可。
+  // 管理者はどのステータスの予約でもキャンセルできる。
+  if (isSelfService) {
+    updateQuery = updateQuery.eq("status", "reserved");
+  }
+
+  const { data, error } = await updateQuery.select("*").maybeSingle();
 
   if (error) {
     return NextResponse.json({ errors: [dict.apiErrors.deleteFailed] }, { status: 500 });
@@ -246,7 +255,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   });
   await writeAuditLog(supabase, {
     actorUserId: null,
-    actorEmail: isManager ? "admin" : existing.employeeName,
+    actorEmail: isSelfService ? existing.employeeName : "admin",
     action: "reservation_cancel",
     targetType: "reservation",
     targetId: cancelled.id,
