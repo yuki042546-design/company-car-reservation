@@ -301,6 +301,7 @@ const ja = {
       return hours > 0 ? `${hours}時間${mins}分` : `${mins}分`;
     },
     usageHistoryMileageKm: (km: number) => `${km}km`,
+    logsSectionTitle: "履歴・監査ログ",
   },
   userManager: {
     roleLabels: {

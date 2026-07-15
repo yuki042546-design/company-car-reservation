@@ -302,6 +302,7 @@ const vi: Dictionary = {
       return hours > 0 ? `${hours} giờ ${mins} phút` : `${mins} phút`;
     },
     usageHistoryMileageKm: (km: number) => `${km}km`,
+    logsSectionTitle: "Lịch sử & Nhật ký",
   },
   userManager: {
     roleLabels: {
