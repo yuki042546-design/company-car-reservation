@@ -8,9 +8,11 @@ interface TodayViewProps {
   reservations: Reservation[];
   dict: Dictionary;
   locale: Locale;
+  /** 車両が複数ある場合のみ渡す（vehicleId → 車両名）。 */
+  vehicleNames?: Record<string, string>;
 }
 
-export function TodayView({ reservations, dict, locale }: TodayViewProps) {
+export function TodayView({ reservations, dict, locale, vehicleNames }: TodayViewProps) {
   if (reservations.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-4 text-sm text-gray-400">
@@ -27,6 +29,7 @@ export function TodayView({ reservations, dict, locale }: TodayViewProps) {
           reservation={r}
           dict={dict}
           locale={locale}
+          vehicleName={vehicleNames?.[r.vehicleId]}
           rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
         />
       ))}

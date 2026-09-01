@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getActiveEmployees, getReservationById } from "@/lib/data";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
+import { getAllVehicles } from "@/lib/vehicles";
 import { ReservationForm } from "@/components/ReservationForm";
 
 export const dynamic = "force-dynamic";
@@ -11,9 +12,10 @@ interface EditReservationPageProps {
 }
 
 export default async function EditReservationPage({ params }: EditReservationPageProps) {
-  const [reservation, employees] = await Promise.all([
+  const [reservation, employees, vehicles] = await Promise.all([
     getReservationById(params.id),
     getActiveEmployees(),
+    getAllVehicles(),
   ]);
   const dict = getDictionary(getLocale());
 
@@ -24,7 +26,13 @@ export default async function EditReservationPage({ params }: EditReservationPag
   return (
     <div>
       <h1 className="mb-5 text-xl font-bold tracking-tight text-gray-900">{dict.form.editTitle}</h1>
-      <ReservationForm employees={employees} mode="edit" reservationId={reservation.id} initial={reservation} />
+      <ReservationForm
+        employees={employees}
+        vehicles={vehicles}
+        mode="edit"
+        reservationId={reservation.id}
+        initial={reservation}
+      />
     </div>
   );
 }

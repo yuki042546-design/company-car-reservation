@@ -21,6 +21,8 @@ interface GanttProps {
   todayReservations: Reservation[];
   todayStartIso: string;
   nowIso: string;
+  /** 車両が複数ある場合のみ渡す（vehicleId → 車両名）。 */
+  vehicleNames?: Record<string, string>;
 }
 
 interface TopScheduleToggleProps {
@@ -103,6 +105,7 @@ export function TopScheduleToggle({ calendar, gantt }: TopScheduleToggleProps) {
             emptyMessage={isTodaySelected ? dict.top.noneToday : dict.top.noneThisDay}
             dict={dict}
             locale={locale}
+            vehicleNames={gantt.vehicleNames}
           />
         </div>
       )}

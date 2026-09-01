@@ -3,6 +3,7 @@ import { getFilteredReservations, type ReservationListTab } from "@/lib/data";
 import { formatDate, isSameJstDate } from "@/lib/dateUtils";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
+import { getAllVehicles } from "@/lib/vehicles";
 import { ReservationCard } from "@/components/ReservationCard";
 import { SelfDeleteButton } from "@/components/SelfDeleteButton";
 import { SelfTabNamePicker } from "@/components/SelfTabNamePicker";
@@ -28,11 +29,12 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
   const page = Math.max(1, Number(searchParams.page) || 1);
   const employeeName = searchParams.name?.trim() || undefined;
 
-  const { reservations, hasMore } = await getFilteredReservations({
-    tab,
-    employeeName,
-    page,
-  });
+  const [{ reservations, hasMore }, vehicles] = await Promise.all([
+    getFilteredReservations({ tab, employeeName, page }),
+    getAllVehicles(),
+  ]);
+  const vehicleNames =
+    vehicles.length > 1 ? Object.fromEntries(vehicles.map((v) => [v.id, v.name])) : undefined;
 
   // 日付ごとにグループ化して表示する
   const groups: { dateIso: string; items: typeof reservations }[] = [];
@@ -83,6 +85,7 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
                     reservation={r}
                     dict={dict}
                     locale={locale}
+                    vehicleName={vehicleNames?.[r.vehicleId]}
                     rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
                   />
                 ))}

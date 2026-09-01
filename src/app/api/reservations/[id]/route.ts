@@ -7,6 +7,7 @@ import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { isAdminRequest } from "@/lib/requireAdmin";
 import { getAppSettings } from "@/lib/data";
+import { getVehicleById } from "@/lib/vehicles";
 import { translateReservationFields } from "@/lib/translate";
 import { logReservationAction } from "@/lib/reservationLogs";
 import { writeAuditLog } from "@/lib/auditLog";
@@ -92,6 +93,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   const start = new Date(body.startTime);
   const end = new Date(body.endTime);
 
+  let targetVehicleId = existing.vehicleId;
+  if (body.vehicleId && body.vehicleId !== existing.vehicleId) {
+    const vehicle = await getVehicleById(body.vehicleId);
+    if (!vehicle || !vehicle.active) {
+      return NextResponse.json({ errors: [dict.validation.vehicleInactive] }, { status: 409 });
+    }
+    targetVehicleId = vehicle.id;
+  }
+
   try {
     const contentUnchanged = existing.destination === body.destination && existing.purpose === body.purpose;
 
@@ -106,7 +116,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const { data, error } = await supabase
       .rpc("update_reservation_tx", {
         p_reservation_id: params.id,
-        p_vehicle_id: existing.vehicleId,
+        p_vehicle_id: targetVehicleId,
         p_updated_by_user_id: null,
         p_employee_name: body.employeeName,
         p_start_time: start.toISOString(),

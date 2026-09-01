@@ -15,6 +15,8 @@ interface TodayGanttChartProps {
   emptyMessage?: string;
   dict: Dictionary;
   locale: Locale;
+  /** 車両が複数ある場合のみ渡す（vehicleId → 車両名）。 */
+  vehicleNames?: Record<string, string>;
 }
 
 const PX_PER_HOUR = 60;
@@ -63,6 +65,7 @@ export function TodayGanttChart({
   emptyMessage,
   dict,
   locale,
+  vehicleNames,
 }: TodayGanttChartProps) {
   let startHour = DEFAULT_START_HOUR;
   let endHour = DEFAULT_END_HOUR;
@@ -140,6 +143,9 @@ export function TodayGanttChart({
                 >
                   <span className="font-mono text-[11px] font-semibold leading-tight tabular-nums text-white">
                     {formatTimeJa(r.startTime)}–{formatTimeJa(r.endTime)}
+                    {vehicleNames?.[r.vehicleId] && (
+                      <span className="ml-1 font-normal text-brand-100">（{vehicleNames[r.vehicleId]}）</span>
+                    )}
                   </span>
                   <span className="truncate text-[11px] leading-tight text-brand-50">
                     {r.employeeName} ・ {displayDestination(r, locale)}

@@ -148,13 +148,14 @@ export async function getAppSettings(): Promise<AppSettings> {
   return data ? mapAppSettingsRow(data as AppSettingsRow) : DEFAULT_APP_SETTINGS;
 }
 
-/** 整備・利用停止期間の一覧（新しい開始日時順）。 */
-export async function getMaintenanceBlocks(): Promise<MaintenanceBlock[]> {
+/** 整備・利用停止期間の一覧（新しい開始日時順）。vehicleId を指定するとその車両のみに絞る。 */
+export async function getMaintenanceBlocks(vehicleId?: string): Promise<MaintenanceBlock[]> {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("maintenance_blocks")
-    .select("*")
-    .order("start_at", { ascending: false });
+  let query = supabase.from("maintenance_blocks").select("*").order("start_at", { ascending: false });
+  if (vehicleId) {
+    query = query.eq("vehicle_id", vehicleId);
+  }
+  const { data, error } = await query;
   if (error) throw error;
   return (data as MaintenanceBlockRow[]).map(mapMaintenanceBlockRow);
 }

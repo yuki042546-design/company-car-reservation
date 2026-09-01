@@ -95,6 +95,7 @@ const ja = {
     newTitle: "新規予約",
     editTitle: "予約の変更",
     employeeName: "使用者名",
+    vehicleLabel: "利用する車両",
     employeeSearchPlaceholder: "タップして選択、または名前で検索",
     noMatchingEmployee: "該当する社員がいません",
     noEmployeesRegistered: "社員が登録されていません",
@@ -187,6 +188,7 @@ const ja = {
     pageTitle: "車両情報",
     empty: "登録されている車両はありません。",
     notSet: "未設定",
+    nameLabel: "車両名",
     plateNumberLabel: "ナンバー",
     modelLabel: "車種",
     parkingLocationLabel: "駐車位置",
@@ -302,6 +304,13 @@ const ja = {
     },
     usageHistoryMileageKm: (km: number) => `${km}km`,
     logsSectionTitle: "履歴・監査ログ",
+    vehiclesSectionTitle: "車両管理",
+  },
+  vehicleManager: {
+    addSectionTitle: "新しい車両を追加",
+    limitReachedNote: "車両は最大4台まで登録できます。",
+    genericError: "更新に失敗しました。",
+    networkError: "通信エラーが発生しました。",
   },
   userManager: {
     roleLabels: {
@@ -397,6 +406,9 @@ const ja = {
     reservationNotCancellable: "この予約はキャンセルできません（すでに開始・完了・キャンセル済みです）。",
     correctionReasonRequired: "訂正・キャンセルの理由を入力してください。",
     notDriverEligible: "運転資格がないため操作できません。",
+    vehicleNameRequired: "車両名を入力してください。",
+    vehicleLimitReached: "車両は最大4台までしか登録できません。",
+    addVehicleFailed: "車両の登録に失敗しました。",
   },
 };
 

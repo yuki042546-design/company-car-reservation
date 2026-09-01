@@ -11,6 +11,8 @@ interface ReservationCardProps {
   locale: Locale;
   showEditLink?: boolean;
   rightSlot?: React.ReactNode;
+  /** 車両が複数ある場合のみ渡す（1台運用時は表示しない）。 */
+  vehicleName?: string;
 }
 
 const STATUS_BADGE_CLASSES: Record<string, string> = {
@@ -21,7 +23,14 @@ const STATUS_BADGE_CLASSES: Record<string, string> = {
   overdue: "bg-danger-soft text-danger",
 };
 
-export function ReservationCard({ reservation, dict, locale, showEditLink = true, rightSlot }: ReservationCardProps) {
+export function ReservationCard({
+  reservation,
+  dict,
+  locale,
+  showEditLink = true,
+  rightSlot,
+  vehicleName,
+}: ReservationCardProps) {
   const isTranslatedDestination =
     reservation.inputLocale !== locale && reservation.destinationTranslated !== null;
   const isTranslatedPurpose = reservation.inputLocale !== locale && reservation.purposeTranslated !== null;
@@ -38,6 +47,11 @@ export function ReservationCard({ reservation, dict, locale, showEditLink = true
             <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-sm font-medium text-brand-600">
               {reservation.employeeName}
             </span>
+            {vehicleName && (
+              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                {vehicleName}
+              </span>
+            )}
             {reservation.status !== "reserved" && statusLabel && (
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-semibold ${

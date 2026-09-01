@@ -96,6 +96,7 @@ const vi: Dictionary = {
     newTitle: "Đặt xe mới",
     editTitle: "Chỉnh sửa lịch đặt xe",
     employeeName: "Người sử dụng",
+    vehicleLabel: "Xe sử dụng",
     employeeSearchPlaceholder: "Chạm để chọn, hoặc tìm theo tên",
     noMatchingEmployee: "Không tìm thấy nhân viên phù hợp",
     noEmployeesRegistered: "Chưa có nhân viên nào được đăng ký",
@@ -188,6 +189,7 @@ const vi: Dictionary = {
     pageTitle: "Thông tin xe",
     empty: "Chưa có xe nào được đăng ký.",
     notSet: "Chưa thiết lập",
+    nameLabel: "Tên xe",
     plateNumberLabel: "Biển số",
     modelLabel: "Dòng xe",
     parkingLocationLabel: "Vị trí đỗ xe",
@@ -303,6 +305,13 @@ const vi: Dictionary = {
     },
     usageHistoryMileageKm: (km: number) => `${km}km`,
     logsSectionTitle: "Lịch sử & Nhật ký",
+    vehiclesSectionTitle: "Quản lý xe",
+  },
+  vehicleManager: {
+    addSectionTitle: "Thêm xe mới",
+    limitReachedNote: "Chỉ có thể đăng ký tối đa 4 xe.",
+    genericError: "Cập nhật thất bại.",
+    networkError: "Đã xảy ra lỗi kết nối.",
   },
   userManager: {
     roleLabels: {
@@ -398,6 +407,9 @@ const vi: Dictionary = {
     reservationNotCancellable: "Không thể hủy lịch đặt xe này (đã bắt đầu, hoàn thành hoặc đã bị hủy).",
     correctionReasonRequired: "Vui lòng nhập lý do đính chính/hủy.",
     notDriverEligible: "Bạn không có quyền lái xe nên không thể thực hiện thao tác này.",
+    vehicleNameRequired: "Vui lòng nhập tên xe.",
+    vehicleLimitReached: "Chỉ có thể đăng ký tối đa 4 xe.",
+    addVehicleFailed: "Đăng ký xe thất bại.",
   },
 };
 

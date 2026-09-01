@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import type { Employee, Reservation } from "@/lib/types";
+import type { Employee, Reservation, Vehicle } from "@/lib/types";
 import {
   addMinutesToDatetimeLocal,
   combineDatetimeLocal,
@@ -37,6 +37,7 @@ function formatDatetimeLocalDisplay(value: string): string {
 
 interface ReservationFormProps {
   employees: Employee[];
+  vehicles: Vehicle[];
   mode: "create" | "edit";
   reservationId?: string;
   initial?: Reservation | null;
@@ -70,7 +71,14 @@ function defaultEnd(startValue: string): string {
   return isoToDatetimeLocal(end.toISOString());
 }
 
-export function ReservationForm({ employees, mode, reservationId, initial, initialDate }: ReservationFormProps) {
+export function ReservationForm({
+  employees,
+  vehicles,
+  mode,
+  reservationId,
+  initial,
+  initialDate,
+}: ReservationFormProps) {
   const { dict } = useI18n();
   const router = useRouter();
 
@@ -103,6 +111,7 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
   }, [initial]);
 
   const [employeeName, setEmployeeName] = useState(initial?.employeeName ?? employees[0]?.name ?? "");
+  const [vehicleId, setVehicleId] = useState(initial?.vehicleId ?? vehicles[0]?.id ?? "");
   const [startTime, setStartTime] = useState(
     initial ? isoToDatetimeLocal(initial.startTime) : defaultStart(initialDate)
   );
@@ -131,6 +140,7 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
 
     const input = {
       employeeName,
+      vehicleId,
       startTime: datetimeLocalToIso(startTime),
       endTime: datetimeLocalToIso(endTime),
       destination,
@@ -204,6 +214,27 @@ export function ReservationForm({ employees, mode, reservationId, initial, initi
           />
         )}
       </div>
+
+      {vehicles.length > 1 && (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="vehicleId">
+            {dict.form.vehicleLabel} <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="vehicleId"
+            value={vehicleId}
+            onChange={(e) => setVehicleId(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2.5"
+            required
+          >
+            {vehicles.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <DateTimeSelect
         id="startTime"

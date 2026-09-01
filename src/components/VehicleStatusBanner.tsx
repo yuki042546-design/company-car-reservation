@@ -112,7 +112,7 @@ export function VehicleStatusBanner({
   return (
     <div className={`rounded-xl border p-4 shadow-sm ${STATUS_STYLES[vehicle.status] ?? "bg-white"}`}>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">{dict.vehicleStatus.sectionTitle}</h2>
+        <h2 className="text-sm font-semibold">{vehicle.name}</h2>
         <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-bold">{statusLabel}</span>
       </div>
 

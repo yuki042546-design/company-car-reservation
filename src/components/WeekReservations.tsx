@@ -10,9 +10,11 @@ interface WeekReservationsProps {
   weekStartIso: string;
   locale: Locale;
   dict: Dictionary;
+  /** 車両が複数ある場合のみ渡す（vehicleId → 車両名）。 */
+  vehicleNames?: Record<string, string>;
 }
 
-export function WeekReservations({ reservations, weekStartIso, locale, dict }: WeekReservationsProps) {
+export function WeekReservations({ reservations, weekStartIso, locale, dict, vehicleNames }: WeekReservationsProps) {
   const weekStart = new Date(weekStartIso);
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart.getTime() + i * 24 * 60 * 60 * 1000);
@@ -38,6 +40,7 @@ export function WeekReservations({ reservations, weekStartIso, locale, dict }: W
                     reservation={r}
                     dict={dict}
                     locale={locale}
+                    vehicleName={vehicleNames?.[r.vehicleId]}
                     rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
                   />
                 ))}

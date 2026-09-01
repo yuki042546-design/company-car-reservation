@@ -17,6 +17,7 @@ const NOW = new Date("2026-07-10T00:00:00+09:00");
 function makeInput(overrides: Partial<ReservationInput> = {}): ReservationInput {
   return {
     employeeName: "山田太郎",
+    vehicleId: "00000000-0000-0000-0000-000000000001",
     startTime: "2026-07-11T10:00:00+09:00",
     endTime: "2026-07-11T11:00:00+09:00",
     destination: "取引先訪問",

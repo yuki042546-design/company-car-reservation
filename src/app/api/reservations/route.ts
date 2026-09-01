@@ -4,7 +4,7 @@ import { mapReservationRow, type ReservationRow } from "@/lib/mappers";
 import { limitsFromAppSettings, validateReservationInput } from "@/lib/reservationRules";
 import { isExclusionViolation } from "@/lib/overlapCheck";
 import { getAppSettings } from "@/lib/data";
-import { getDefaultVehicle } from "@/lib/vehicles";
+import { getVehicleById } from "@/lib/vehicles";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { translateReservationFields } from "@/lib/translate";
@@ -66,9 +66,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ errors: validation.errors }, { status: 400 });
   }
 
-  const vehicle = await getDefaultVehicle();
+  const vehicle = body.vehicleId ? await getVehicleById(body.vehicleId) : null;
   if (!vehicle) {
-    return NextResponse.json({ errors: [dict.validation.vehicleInactive] }, { status: 500 });
+    return NextResponse.json({ errors: [dict.validation.vehicleInactive] }, { status: 400 });
   }
   if (!vehicle.active) {
     return NextResponse.json({ errors: [dict.validation.vehicleInactive] }, { status: 409 });

@@ -8,11 +8,13 @@ import { ReservationCard } from "./ReservationCard";
 
 interface AdminReservationListProps {
   reservations: Reservation[];
+  /** 車両が複数ある場合のみ渡す（vehicleId → 車両名）。 */
+  vehicleNames?: Record<string, string>;
 }
 
 const STATUS_OPTIONS: ReservationStatus[] = ["reserved", "in_use", "completed", "cancelled", "no_show", "overdue"];
 
-export function AdminReservationList({ reservations }: AdminReservationListProps) {
+export function AdminReservationList({ reservations, vehicleNames }: AdminReservationListProps) {
   const { dict, locale } = useI18n();
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -190,6 +192,7 @@ export function AdminReservationList({ reservations }: AdminReservationListProps
                 reservation={r}
                 dict={dict}
                 locale={locale}
+                vehicleName={vehicleNames?.[r.vehicleId]}
                 showEditLink
                 rightSlot={
                   <button

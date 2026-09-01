@@ -32,13 +32,12 @@ export interface Reservation {
 
 export interface ReservationInput {
   employeeName: string;
+  vehicleId: string;
   startTime: string; // ISO 8601 (datetime-local value converted to ISO)
   endTime: string; // ISO 8601
   destination: string;
   purpose: string;
   note?: string | null;
-  /** vehicle_manager/system_admin が代理予約する場合のみ指定（省略時は自分の予約になる） */
-  onBehalfOfUserId?: string | null;
   /** 二重送信防止用の冪等キー。フォームを開いた時点で1回だけ生成しクライアントで保持する。 */
   idempotencyKey?: string;
 }

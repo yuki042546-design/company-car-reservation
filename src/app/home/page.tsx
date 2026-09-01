@@ -9,7 +9,7 @@ import {
 import { getJstDateKey, getMonthRangeJst, getThisWeekRangeJst, getTodayRangeJst, shiftMonthKey } from "@/lib/dateUtils";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
-import { getDefaultVehicle } from "@/lib/vehicles";
+import { getActiveVehicles } from "@/lib/vehicles";
 import { SectionHeading } from "@/components/SectionHeading";
 import { TodayView } from "@/components/TodayView";
 import { TopScheduleToggle } from "@/components/TopScheduleToggle";
@@ -43,16 +43,30 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const { start: monthStart, end: monthEnd, monthKey } = getMonthRangeJst(searchParams.month);
   const monthReservations = await getReservationsInRange(monthStart, monthEnd);
 
-  const vehicle = await getDefaultVehicle();
-  const [currentUsage, nextReservation] = vehicle
-    ? await Promise.all([getCurrentUsageReservation(vehicle.id), getNextReservation(vehicle.id, now)])
-    : [null, null];
+  const vehicles = await getActiveVehicles();
+  const vehicleBanners = await Promise.all(
+    vehicles.map(async (vehicle) => ({
+      vehicle,
+      currentUsage: await getCurrentUsageReservation(vehicle.id),
+      nextReservation: await getNextReservation(vehicle.id, now),
+    }))
+  );
+  // 車両が複数ある場合のみ、予約カードに車両名バッジを表示する。
+  const vehicleNames =
+    vehicles.length > 1 ? Object.fromEntries(vehicles.map((v) => [v.id, v.name])) : undefined;
 
   return (
     <div className="space-y-8">
-      {vehicle && (
-        <VehicleStatusBanner vehicle={vehicle} currentUsage={currentUsage} nextReservation={nextReservation} />
-      )}
+      <div className="space-y-3">
+        {vehicleBanners.map(({ vehicle, currentUsage, nextReservation }) => (
+          <VehicleStatusBanner
+            key={vehicle.id}
+            vehicle={vehicle}
+            currentUsage={currentUsage}
+            nextReservation={nextReservation}
+          />
+        ))}
+      </div>
 
       <section>
         <SectionHeading
@@ -74,7 +88,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             todayKey: getJstDateKey(now.toISOString()),
             monthReservations,
           }}
-          gantt={{ todayReservations: today, todayStartIso: todayStart.toISOString(), nowIso: now.toISOString() }}
+          gantt={{
+            todayReservations: today,
+            todayStartIso: todayStart.toISOString(),
+            nowIso: now.toISOString(),
+            vehicleNames,
+          }}
         />
       </section>
 
@@ -89,7 +108,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </svg>
           }
         />
-        <TodayView reservations={today} dict={dict} locale={locale} />
+        <TodayView reservations={today} dict={dict} locale={locale} vehicleNames={vehicleNames} />
       </section>
 
       <section>
@@ -107,7 +126,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </Link>
           }
         />
-        <WeekReservations reservations={week} weekStartIso={weekStart.toISOString()} locale={locale} dict={dict} />
+        <WeekReservations
+          reservations={week}
+          weekStartIso={weekStart.toISOString()}
+          locale={locale}
+          dict={dict}
+          vehicleNames={vehicleNames}
+        />
       </section>
     </div>
   );

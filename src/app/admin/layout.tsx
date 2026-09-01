@@ -23,6 +23,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const tabs = [
     { href: "/admin/reservations", label: dict.admin.reservationsSectionTitle },
     { href: "/admin/employees", label: dict.admin.employeesSectionTitle },
+    { href: "/admin/vehicles", label: dict.admin.vehiclesSectionTitle },
     { href: "/admin/maintenance", label: dict.maintenance.sectionTitle },
     { href: "/admin/usage-history", label: dict.admin.usageHistorySectionTitle },
     { href: "/admin/logs", label: dict.admin.logsSectionTitle },
