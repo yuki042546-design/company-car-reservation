@@ -65,6 +65,7 @@ export async function getReservationsInRange(start: Date, end: Date): Promise<Re
     .select("*")
     .lt("start_time", end.toISOString())
     .gt("end_time", start.toISOString())
+    .neq("status", "cancelled")
     .order("start_time", { ascending: true });
   if (error) throw error;
   return (data as ReservationRow[]).map(mapReservationRow);
@@ -289,13 +290,17 @@ export async function getFilteredReservations(options: ReservationFilterOptions)
 
   switch (options.tab) {
     case "self":
-      query = query.eq("employee_name", options.employeeName).order("start_time", { ascending: false });
+      query = query
+        .eq("employee_name", options.employeeName)
+        .neq("status", "cancelled")
+        .order("start_time", { ascending: false });
       break;
     case "today": {
       const { start, end } = getTodayRangeJst(now);
       query = query
         .lt("start_time", end.toISOString())
         .gt("end_time", start.toISOString())
+        .neq("status", "cancelled")
         .order("start_time", { ascending: true });
       break;
     }
