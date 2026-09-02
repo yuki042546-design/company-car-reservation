@@ -33,21 +33,34 @@ const vi: Dictionary = {
   },
   guide: {
     pageTitle: "Hướng dẫn sử dụng",
-    intro: "Bạn có thể đặt xe và kiểm tra lịch đặt xe bất cứ lúc nào từ điện thoại hoặc máy tính. Vui lòng tham khảo các bước dưới đây.",
+    intro:
+      "Tổng hợp các quy tắc về đặt và sử dụng xe công ty. Đặc biệt, nút \"Bắt đầu đi\" và \"Trả xe\" bắt buộc phải nhập số km, vui lòng kiểm tra kỹ.",
     step1Title: "① Đặt xe",
     step1Body:
-      "Ở màn hình \"Đặt xe công ty\", chạm vào một ngày trên lịch để chọn, rồi chạm lại một lần nữa để chuyển sang màn hình nhập thông tin đặt xe. Hãy nhập người sử dụng, thời gian bắt đầu/kết thúc, điểm đến và mục đích rồi đăng ký.",
+      "Chạm vào tab \"Đặt xe mới\" ở phía trên màn hình, hoặc chạm vào một ngày trên lịch ở trang chủ (chạm lần nữa để chuyển sang màn hình nhập thông tin). Hãy chọn tên của bạn từ danh sách người sử dụng, chọn xe (mục này chỉ hiện khi công ty có từ 2 xe trở lên), nhập thời gian bắt đầu, thời gian sử dụng, điểm đến và mục đích rồi nhấn \"Đăng ký\". Nếu không thấy tên của bạn trong danh sách, hãy nhờ quản trị viên thêm vào.",
     step2Title: "② Xem lịch đặt xe",
     step2Body:
-      "Chuyển đổi giữa \"Lịch\" và \"Thời gian chi tiết\" để xem lịch đặt xe theo từng ngày. Phía dưới màn hình cũng hiển thị danh sách lịch đặt xe hôm nay và tuần này.",
-    step3Title: "③ Sửa hoặc hủy lịch đặt xe",
+      "Ở trang chủ, bạn có thể chuyển đổi giữa \"Lịch\" và \"Thời gian chi tiết\". Ở trang \"Danh sách đặt xe\", bạn có thể lọc theo các tab: Lịch của tôi / Hôm nay / Sắp tới / Đang sử dụng / Đã sử dụng / Đã hủy. Với tab \"Lịch của tôi\", lần đầu bạn cần chọn tên của mình (từ lần sau, thiết bị sẽ tự nhớ và hiển thị lại).",
+    step3Title: "③ Bắt đầu đi (bắt buộc nhập số km)",
     step3Body:
-      "Lịch đặt xe chưa bắt đầu có thể sửa từ nút \"Sửa\" trên thẻ đặt xe. Chỉ người đã đặt mới có thể hủy. Chỉ quản trị viên mới có thể sửa lịch đã bắt đầu hoặc đính chính hồ sơ cũ.",
-    step4Title: "④ Chuyển đổi ngôn ngữ",
-    step4Body: "Dùng nút ngôn ngữ ở góc trên bên phải màn hình để chuyển đổi giữa tiếng Nhật và tiếng Việt.",
-    step5Title: "⑤ Chức năng quản trị",
+      "Khi đến giờ đặt xe, hãy nhấn \"Bắt đầu đi\" ở phần trạng thái xe trên trang chủ. Trước khi nhấn, bạn phải nhập số km hiển thị trên đồng hồ công-tơ-mét của xe vào ô \"Số km khi xuất phát\". Nếu chưa nhập, nút sẽ không bấm được. Đây là quy tắc để ghi lại chính xác quãng đường xe đã đi.",
+    step4Title: "④ Trả xe (bắt buộc nhập số km)",
+    step4Body:
+      "Khi trả xe, cũng nhập số km trên công-tơ-mét vào ô \"Số km khi trả xe\" rồi nhấn \"Trả xe\". Màn hình sẽ hiển thị lại số km lúc xuất phát để bạn đối chiếu. Nếu số km khi trả nhỏ hơn khi xuất phát, hệ thống sẽ báo lỗi (do nghi ngờ nhập sai) và không cho đăng ký — hãy kiểm tra lại và nhập lại số đúng.",
+    step5Title: "⑤ Gia hạn thời gian sử dụng",
     step5Body:
-      "Trang quản trị cho phép quản lý tất cả lịch đặt xe, đính chính hồ sơ cũ, quản lý danh sách nhân viên, mời người dùng và phân quyền, xem nhật ký kiểm toán (cần đăng nhập bằng tài khoản công ty).",
+      "Nếu cần sử dụng lâu hơn dự kiến, nhấn \"Gia hạn\" để kéo dài thời gian trả xe thêm 1 tiếng. Không thể gia hạn nếu khung giờ đó đã có người khác đặt trước.",
+    step6Title: "⑥ Sửa hoặc hủy lịch đặt xe",
+    step6Body:
+      "Với lịch đặt xe chưa bắt đầu, bạn có thể tự sửa hoặc hủy từ nút \"Sửa\" hoặc \"Hủy lịch đặt xe\" trên thẻ đặt xe (chọn đúng tên đã dùng khi đặt để xác nhận là chính chủ). Việc đính chính lịch đã bắt đầu, hoặc hủy lịch do người khác đặt, chỉ quản trị viên mới thực hiện được.",
+    step7Title: "⑦ Xem thông tin xe",
+    step7Body:
+      "Ở tab \"Thông tin xe\", bạn có thể xem biển số, vị trí đỗ xe, nơi cất chìa khóa, liên hệ khẩn cấp, hạn đăng kiểm/bảo hiểm của từng xe.",
+    step8Title: "⑧ Chuyển đổi ngôn ngữ",
+    step8Body: "Dùng nút ngôn ngữ ở góc trên bên phải màn hình để chuyển đổi giữa tiếng Nhật và tiếng Việt.",
+    step9Title: "⑨ Chức năng quản trị",
+    step9Body:
+      "Trang quản trị (cần đăng nhập bằng mật khẩu chung) cho phép quản lý và đính chính tất cả lịch đặt xe, quản lý danh sách nhân viên, đăng ký/quản lý xe, đăng ký lịch bảo trì/ngừng sử dụng, xem lịch sử sử dụng và nhật ký kiểm toán.",
   },
   top: {
     scheduleTitle: "Lịch trình",
