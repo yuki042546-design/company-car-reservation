@@ -686,7 +686,10 @@ create or replace function update_reservation_tx(
   p_note text,
   p_input_locale text,
   p_destination_translated text,
-  p_purpose_translated text
+  p_purpose_translated text,
+  -- 管理者による訂正（開始後・完了後の予約の変更）を許可する場合はtrue。
+  -- アプリ側で isManager && 訂正理由あり を確認した上でのみ渡される。
+  p_allow_correction boolean default false
 )
 returns reservations
 language plpgsql
@@ -723,7 +726,7 @@ begin
     destination_translated = p_destination_translated,
     purpose_translated = p_purpose_translated
   where id = p_reservation_id
-    and status = 'reserved'
+    and (status = 'reserved' or p_allow_correction)
   returning * into v_reservation;
 
   if not found then

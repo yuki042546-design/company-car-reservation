@@ -43,7 +43,10 @@ export function validateReservationInput(
   input: ReservationInput,
   dict: Dictionary,
   now: Date = new Date(),
-  limits: ReservationRuleLimits = DEFAULT_LIMITS
+  limits: ReservationRuleLimits = DEFAULT_LIMITS,
+  // 管理者による訂正（開始後・完了後の予約の変更）は、過去日時のままの
+  // 変更を許可する必要があるため、過去日時チェックのみ無効化できる。
+  options: { skipPastCheck?: boolean } = {}
 ): ValidationResult {
   const errors: string[] = [];
   const v = dict.validation;
@@ -77,7 +80,7 @@ export function validateReservationInput(
     errors.push(v.endNotOnSlot);
   }
 
-  if (start.getTime() < now.getTime()) {
+  if (!options.skipPastCheck && start.getTime() < now.getTime()) {
     errors.push(v.pastDateTime);
   }
 

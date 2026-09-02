@@ -125,9 +125,14 @@ export function ReservationForm({
   const [destination, setDestination] = useState(initial?.destination ?? "");
   const [purpose, setPurpose] = useState(initial?.purpose ?? "");
   const [note, setNote] = useState(initial?.note ?? "");
+  const [correctionReason, setCorrectionReason] = useState("");
 
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // 開始後・完了後など「予約済み」以外の予約を変更する場合は、管理者による
+  // 訂正として扱われ、理由の入力が必須になる（サーバー側の判定と揃えている）。
+  const isCorrection = mode === "edit" && !!initial && initial.status !== "reserved";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -135,6 +140,11 @@ export function ReservationForm({
 
     if (!employeeOptions.some((emp) => emp.name === employeeName)) {
       setErrors([dict.form.mustSelectFromList]);
+      return;
+    }
+
+    if (isCorrection && !correctionReason.trim()) {
+      setErrors([dict.apiErrors.correctionReasonRequired]);
       return;
     }
 
@@ -148,15 +158,24 @@ export function ReservationForm({
       note: note || null,
     };
 
-    const validation = validateReservationInput(input, dict);
+    const validation = validateReservationInput(input, dict, new Date(), undefined, {
+      skipPastCheck: isCorrection,
+    });
     if (!validation.valid) {
       setErrors(validation.errors);
       return;
     }
 
     // ログイン機能がないため、変更時は元の使用者名を本人確認として送る
-    // （管理者は別途ログイン済みなので不要）。
-    const payload = mode === "edit" ? { ...input, requesterName: initial?.employeeName } : input;
+    // （管理者は別途ログイン済みなので不要）。訂正の場合は理由も併せて送る。
+    const payload =
+      mode === "edit"
+        ? {
+            ...input,
+            requesterName: initial?.employeeName,
+            correctionReason: isCorrection ? correctionReason.trim() : undefined,
+          }
+        : input;
 
     setSubmitting(true);
     try {
@@ -193,6 +212,23 @@ export function ReservationForm({
               <li key={err}>{err}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {isCorrection && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <label className="mb-1 block text-sm font-medium text-amber-900" htmlFor="correctionReason">
+            {dict.form.correctionReasonLabel} <span className="text-red-500">*</span>
+          </label>
+          <p className="mb-2 text-xs text-amber-700">{dict.form.correctionReasonHelp}</p>
+          <textarea
+            id="correctionReason"
+            value={correctionReason}
+            onChange={(e) => setCorrectionReason(e.target.value)}
+            rows={2}
+            className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2.5 text-sm"
+            required
+          />
         </div>
       )}
 
@@ -243,6 +279,7 @@ export function ReservationForm({
         onChange={setStartTime}
         required
         timeOptions={startTimeOptions}
+        minDate={isCorrection ? "" : undefined}
       />
 
       <DurationSelect
@@ -268,6 +305,7 @@ export function ReservationForm({
           onChange={setCustomEndTime}
           required
           helperText={dict.form.durationHelp}
+          minDate={isCorrection ? "" : undefined}
         />
       ) : (
         <p className="text-sm text-gray-600">

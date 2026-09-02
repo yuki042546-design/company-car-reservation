@@ -110,6 +110,8 @@ const vi: Dictionary = {
   form: {
     newTitle: "Đặt xe mới",
     editTitle: "Chỉnh sửa lịch đặt xe",
+    correctionReasonLabel: "Lý do đính chính",
+    correctionReasonHelp: "Vì đây là lịch đặt xe đã bắt đầu hoặc đã hoàn thành, bạn bắt buộc phải nhập lý do.",
     employeeName: "Người sử dụng",
     vehicleLabel: "Xe sử dụng",
     employeeSearchPlaceholder: "Chạm để chọn, hoặc tìm theo tên",
