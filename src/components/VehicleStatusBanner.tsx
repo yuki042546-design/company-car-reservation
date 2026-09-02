@@ -12,6 +12,8 @@ interface VehicleStatusBannerProps {
   vehicle: Vehicle;
   currentUsage: Reservation | null;
   nextReservation: Reservation | null;
+  /** 使用中の場合、出発時に記録済みの走行距離（返却値との比較・参考表示に使う）。 */
+  departureOdometer?: number | null;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -25,6 +27,7 @@ export function VehicleStatusBanner({
   vehicle,
   currentUsage,
   nextReservation,
+  departureOdometer: recordedDepartureOdometer,
 }: VehicleStatusBannerProps) {
   const { dict, locale } = useI18n();
   const router = useRouter();
@@ -32,6 +35,22 @@ export function VehicleStatusBanner({
   const [error, setError] = useState<string | null>(null);
   const [departureOdometer, setDepartureOdometer] = useState("");
   const [returnOdometer, setReturnOdometer] = useState("");
+
+  const parsedDepartureInput = Number(departureOdometer);
+  const isDepartureInputValid =
+    departureOdometer.trim() !== "" && Number.isFinite(parsedDepartureInput) && parsedDepartureInput >= 0;
+
+  const parsedReturnInput = Number(returnOdometer);
+  const isReturnBelowDeparture =
+    recordedDepartureOdometer != null &&
+    returnOdometer.trim() !== "" &&
+    Number.isFinite(parsedReturnInput) &&
+    parsedReturnInput < recordedDepartureOdometer;
+  const isReturnInputValid =
+    returnOdometer.trim() !== "" &&
+    Number.isFinite(parsedReturnInput) &&
+    parsedReturnInput >= 0 &&
+    !isReturnBelowDeparture;
 
   const statusLabel =
     vehicle.status === "available"
@@ -70,9 +89,8 @@ export function VehicleStatusBanner({
   }
 
   async function handleReturn() {
-    await callAction("return", {
-      returnOdometer: returnOdometer.trim() ? Number(returnOdometer) : undefined,
-    });
+    if (!isReturnInputValid) return;
+    await callAction("return", { returnOdometer: parsedReturnInput });
   }
 
   async function handleExtend() {
@@ -82,7 +100,7 @@ export function VehicleStatusBanner({
   }
 
   async function handleDepart() {
-    if (!nextReservation) return;
+    if (!nextReservation || !isDepartureInputValid) return;
     setError(null);
     setBusy(true);
     try {
@@ -91,7 +109,7 @@ export function VehicleStatusBanner({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "depart",
-          departureOdometer: departureOdometer.trim() ? Number(departureOdometer) : undefined,
+          departureOdometer: parsedDepartureInput,
         }),
       });
       const json = await res.json();
@@ -134,21 +152,31 @@ export function VehicleStatusBanner({
           </p>
           {canOperate && (
             <div className="mt-3 space-y-2">
+              {recordedDepartureOdometer != null && (
+                <p className="text-xs text-gray-500">
+                  {dict.action.departureOdometerReferenceLabel(recordedDepartureOdometer)}
+                </p>
+              )}
               <label className="flex items-center gap-2 text-xs text-gray-500">
                 {dict.action.returnOdometerLabel}
+                <span className="text-red-500">*</span>
                 <input
                   type="number"
                   inputMode="numeric"
                   min={0}
+                  required
                   value={returnOdometer}
                   onChange={(e) => setReturnOdometer(e.target.value)}
                   className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900"
                 />
               </label>
+              {isReturnBelowDeparture && (
+                <p className="text-xs text-danger">{dict.validation.returnOdometerTooLow}</p>
+              )}
               <div className="flex gap-2">
                 <button
                   onClick={handleReturn}
-                  disabled={busy}
+                  disabled={busy || !isReturnInputValid}
                   className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
                 >
                   {dict.action.returnButton}
@@ -176,10 +204,12 @@ export function VehicleStatusBanner({
                 <div className="flex items-center gap-2">
                   <label className="flex items-center gap-2 text-xs text-gray-500">
                     {dict.action.departureOdometerLabel}
+                    <span className="text-red-500">*</span>
                     <input
                       type="number"
                       inputMode="numeric"
                       min={0}
+                      required
                       value={departureOdometer}
                       onChange={(e) => setDepartureOdometer(e.target.value)}
                       className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900"
@@ -187,7 +217,7 @@ export function VehicleStatusBanner({
                   </label>
                   <button
                     onClick={handleDepart}
-                    disabled={busy}
+                    disabled={busy || !isDepartureInputValid}
                     className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
                   >
                     {dict.action.departButton}

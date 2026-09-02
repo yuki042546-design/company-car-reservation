@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   getCurrentUsageReservation,
   getNextReservation,
+  getOpenUsageRecordDepartureOdometer,
   getReservationsInRange,
   getThisWeekReservations,
   getTodayReservations,
@@ -45,11 +46,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   const vehicles = await getActiveVehicles();
   const vehicleBanners = await Promise.all(
-    vehicles.map(async (vehicle) => ({
-      vehicle,
-      currentUsage: await getCurrentUsageReservation(vehicle.id),
-      nextReservation: await getNextReservation(vehicle.id, now),
-    }))
+    vehicles.map(async (vehicle) => {
+      const currentUsage = await getCurrentUsageReservation(vehicle.id);
+      const [nextReservation, departureOdometer] = await Promise.all([
+        getNextReservation(vehicle.id, now),
+        currentUsage ? getOpenUsageRecordDepartureOdometer(currentUsage.id) : Promise.resolve(null),
+      ]);
+      return { vehicle, currentUsage, nextReservation, departureOdometer };
+    })
   );
   // 車両が複数ある場合のみ、予約カードに車両名バッジを表示する。
   const vehicleNames =
@@ -58,12 +62,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-3">
-        {vehicleBanners.map(({ vehicle, currentUsage, nextReservation }) => (
+        {vehicleBanners.map(({ vehicle, currentUsage, nextReservation, departureOdometer }) => (
           <VehicleStatusBanner
             key={vehicle.id}
             vehicle={vehicle}
             currentUsage={currentUsage}
             nextReservation={nextReservation}
+            departureOdometer={departureOdometer}
           />
         ))}
       </div>

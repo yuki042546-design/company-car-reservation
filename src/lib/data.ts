@@ -239,6 +239,23 @@ export async function getCurrentUsageReservation(vehicleId: string): Promise<Res
   return data ? mapReservationRow(data as ReservationRow) : null;
 }
 
+/**
+ * 使用中の予約に対応する、まだ返却されていない利用実績行の出発時走行距離を返す。
+ * 返却時の入力欄に「出発時: NNNkm」を表示し、返却値が出発値を下回っていないか
+ * 画面上でも確認できるようにするために使う。
+ */
+export async function getOpenUsageRecordDepartureOdometer(reservationId: string): Promise<number | null> {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("vehicle_usage_records")
+    .select("departure_odometer")
+    .eq("reservation_id", reservationId)
+    .is("returned_at", null)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.departure_odometer ?? null;
+}
+
 /** 次に予定されている（reserved状態で開始が最も早い）予約を返す。 */
 export async function getNextReservation(vehicleId: string, from: Date = new Date()): Promise<Reservation | null> {
   const supabase = getSupabaseAdmin();
