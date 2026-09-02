@@ -104,6 +104,8 @@ const vi: Dictionary = {
     note: "Ghi chú",
     change: "Sửa",
     autoTranslated: "dịch tự động",
+    mileage: "Quãng đường",
+    mileageKm: (km: number) => `${km}km`,
   },
   form: {
     newTitle: "Đặt xe mới",

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getFilteredReservations, type ReservationListTab } from "@/lib/data";
+import { getFilteredReservations, getMileageByReservationIds, type ReservationListTab } from "@/lib/data";
 import { formatDate, isSameJstDate } from "@/lib/dateUtils";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -35,6 +35,8 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
   ]);
   const vehicleNames =
     vehicles.length > 1 ? Object.fromEntries(vehicles.map((v) => [v.id, v.name])) : undefined;
+  // 出発・返却が完了した予約だけ、記録済みの走行距離を表示する。
+  const mileageByReservationId = await getMileageByReservationIds(reservations.map((r) => r.id));
 
   // 日付ごとにグループ化して表示する
   const groups: { dateIso: string; items: typeof reservations }[] = [];
@@ -86,6 +88,7 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
                     dict={dict}
                     locale={locale}
                     vehicleName={vehicleNames?.[r.vehicleId]}
+                    mileageKm={mileageByReservationId[r.id] ?? null}
                     rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
                   />
                 ))}

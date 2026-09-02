@@ -13,6 +13,8 @@ interface ReservationCardProps {
   rightSlot?: React.ReactNode;
   /** 車両が複数ある場合のみ渡す（1台運用時は表示しない）。 */
   vehicleName?: string;
+  /** 出発・返却時に記録された走行距離（km）。未記録・未返却ならnull/undefined。 */
+  mileageKm?: number | null;
 }
 
 const STATUS_BADGE_CLASSES: Record<string, string> = {
@@ -30,6 +32,7 @@ export function ReservationCard({
   showEditLink = true,
   rightSlot,
   vehicleName,
+  mileageKm,
 }: ReservationCardProps) {
   const isTranslatedDestination =
     reservation.inputLocale !== locale && reservation.destinationTranslated !== null;
@@ -76,6 +79,12 @@ export function ReservationCard({
               <span className="ml-1 text-xs text-gray-400">({dict.reservationCard.autoTranslated})</span>
             )}
           </p>
+          {mileageKm != null && (
+            <p className="mt-1 text-sm text-gray-700">
+              <span className="text-gray-500">{dict.reservationCard.mileage}: </span>
+              {dict.reservationCard.mileageKm(mileageKm)}
+            </p>
+          )}
           {reservation.note && (
             <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-500">
               {dict.reservationCard.note}: {reservation.note}

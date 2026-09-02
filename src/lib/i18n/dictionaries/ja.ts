@@ -103,6 +103,8 @@ const ja = {
     note: "備考",
     change: "変更",
     autoTranslated: "自動翻訳",
+    mileage: "走行距離",
+    mileageKm: (km: number) => `${km}km`,
   },
   form: {
     newTitle: "新規予約",

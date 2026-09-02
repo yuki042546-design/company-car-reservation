@@ -213,6 +213,31 @@ export async function getUsageHistory(limit = 200): Promise<UsageHistoryEntry[]>
   });
 }
 
+/**
+ * 指定した予約IDのうち、出発・返却の両方が記録済みのものだけ走行距離（km）を返す
+ * （予約一覧に「走行距離: ○○km」を表示するために使う。未返却・未記録の予約は含まれない）。
+ */
+export async function getMileageByReservationIds(
+  reservationIds: string[]
+): Promise<Record<string, number>> {
+  if (reservationIds.length === 0) return {};
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("vehicle_usage_records")
+    .select("reservation_id, departure_odometer, return_odometer")
+    .in("reservation_id", reservationIds)
+    .not("departure_odometer", "is", null)
+    .not("return_odometer", "is", null);
+  if (error) throw error;
+
+  const result: Record<string, number> = {};
+  for (const row of data as { reservation_id: string; departure_odometer: number; return_odometer: number }[]) {
+    result[row.reservation_id] = row.return_odometer - row.departure_odometer;
+  }
+  return result;
+}
+
 export async function getAuditLogs(limit = 200): Promise<AuditLog[]> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
