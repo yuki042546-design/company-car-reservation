@@ -109,6 +109,8 @@ const ja = {
   form: {
     newTitle: "新規予約",
     editTitle: "予約の変更",
+    correctionReasonLabel: "訂正理由",
+    correctionReasonHelp: "開始後・完了後の予約を変更するため、理由の入力が必須です。",
     employeeName: "使用者名",
     vehicleLabel: "利用する車両",
     employeeSearchPlaceholder: "タップして選択、または名前で検索",

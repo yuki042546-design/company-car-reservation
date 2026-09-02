@@ -85,7 +85,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   const settings = await getAppSettings();
   const limits = limitsFromAppSettings(settings);
-  const validation = validateReservationInput(body, dict, new Date(), limits);
+  const validation = validateReservationInput(body, dict, new Date(), limits, {
+    skipPastCheck: isCorrection,
+  });
   if (!validation.valid) {
     return NextResponse.json({ errors: validation.errors }, { status: 400 });
   }
@@ -127,6 +129,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         p_input_locale: inputLocale,
         p_destination_translated: destinationTranslated,
         p_purpose_translated: purposeTranslated,
+        p_allow_correction: isManager && isCorrection,
       })
       .single();
 
