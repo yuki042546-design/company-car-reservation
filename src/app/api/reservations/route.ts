@@ -132,7 +132,14 @@ export async function POST(request: NextRequest) {
       targetUserId: null,
       targetType: "reservation",
       targetId: reservation.id,
-      data: { startTime: reservation.startTime, endTime: reservation.endTime, destination: reservation.destination },
+      data: {
+        employeeName: reservation.employeeName,
+        vehicleName: vehicle.name,
+        purpose: reservation.purpose,
+        startTime: reservation.startTime,
+        endTime: reservation.endTime,
+        destination: reservation.destination,
+      },
       idempotencyKey: `reservation_created:${reservation.id}`,
     });
 

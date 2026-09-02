@@ -15,6 +15,7 @@ export type NotificationEventType =
   | "reminder_before_start"
   | "return_reminder"
   | "return_overdue"
+  | "reservation_no_show"
   | "extend_succeeded"
   | "extend_failed"
   | "next_reservation_delayed"

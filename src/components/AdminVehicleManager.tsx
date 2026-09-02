@@ -7,6 +7,8 @@ import { useI18n } from "./LocaleProvider";
 
 interface AdminVehicleManagerProps {
   vehicles: Vehicle[];
+  /** 直近30日の車両ごとの稼働率（%）。data未取得の車両は0%として扱う。 */
+  utilizationRates?: Record<string, number>;
 }
 
 const MAX_VEHICLES = 4;
@@ -49,7 +51,7 @@ const EMPTY_FIELDS: NewVehicleFields = {
   tireChangeDueDate: "",
 };
 
-export function AdminVehicleManager({ vehicles }: AdminVehicleManagerProps) {
+export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVehicleManagerProps) {
   const { dict } = useI18n();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +157,9 @@ export function AdminVehicleManager({ vehicles }: AdminVehicleManagerProps) {
             <div className="min-w-0">
               <div className={v.active ? "text-gray-800" : "text-gray-400 line-through"}>{v.name}</div>
               <div className="mt-0.5 text-xs text-gray-400">{statusLabel[v.status] ?? v.status}</div>
+              <div className="mt-0.5 text-xs text-gray-400">
+                {dict.vehicleManager.utilizationLabel(utilizationRates[v.id] ?? 0)}
+              </div>
             </div>
             <button
               onClick={() => toggleActive(v)}

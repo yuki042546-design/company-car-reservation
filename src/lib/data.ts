@@ -238,6 +238,35 @@ export async function getMileageByReservationIds(
   return result;
 }
 
+/**
+ * 直近 days 日間の車両ごとの稼働率（%）。実際に使用された（completed/overdue）
+ * 予約の利用時間合計 ÷ 期間全体の時間で算出する、簡易的な参考値。
+ */
+export async function getVehicleUtilizationRates(days = 30): Promise<Record<string, number>> {
+  const supabase = getSupabaseAdmin();
+  const sinceIso = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("vehicle_id, start_time, end_time")
+    .in("status", ["completed", "overdue"])
+    .gte("start_time", sinceIso);
+  if (error) throw error;
+
+  const usedMsByVehicle: Record<string, number> = {};
+  for (const row of data as { vehicle_id: string; start_time: string; end_time: string }[]) {
+    const ms = new Date(row.end_time).getTime() - new Date(row.start_time).getTime();
+    usedMsByVehicle[row.vehicle_id] = (usedMsByVehicle[row.vehicle_id] ?? 0) + Math.max(0, ms);
+  }
+
+  const totalMs = days * 24 * 60 * 60 * 1000;
+  const rates: Record<string, number> = {};
+  for (const [vehicleId, usedMs] of Object.entries(usedMsByVehicle)) {
+    rates[vehicleId] = Math.round((usedMs / totalMs) * 1000) / 10;
+  }
+  return rates;
+}
+
 export async function getAuditLogs(limit = 200): Promise<AuditLog[]> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
