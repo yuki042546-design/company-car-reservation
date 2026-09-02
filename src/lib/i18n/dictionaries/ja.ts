@@ -329,6 +329,7 @@ const ja = {
     limitReachedNote: "車両は最大4台まで登録できます。",
     genericError: "更新に失敗しました。",
     networkError: "通信エラーが発生しました。",
+    utilizationLabel: (rate: number) => `稼働率(直近30日): ${rate}%`,
   },
   userManager: {
     roleLabels: {

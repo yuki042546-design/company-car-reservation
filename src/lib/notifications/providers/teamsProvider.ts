@@ -1,23 +1,26 @@
 import type { NotificationProvider } from "../types";
+import { buildNotificationMessage } from "../messageText";
 
 // Microsoft Teams のIncoming Webhook（Office 365 Connector形式）経由の通知プロバイダー。
 // TEAMS_WEBHOOK_URL が設定されている場合のみ registry.ts から有効化される。
 //
-// 注意: TeamsチームがすでにPower Automateの「Webhookの要求を受信したとき」フローへ
-// 移行している場合、ペイロード形式がそのフローのトリガースキーマに依存するため、
-// 下記のMessageCard形式では届かない可能性がある。その場合は本ファイルの
-// buildPayload() をフロー側のスキーマに合わせて調整すること。
-// 実際のWebhook URLが用意できていないため、現時点では未検証（IMPLEMENTATION_STATUS.md参照）。
+// 注意: 従来の「コネクタ」形式の受信Webhookは廃止され、現在は「Workflows」アプリ
+// （Power Automateの「Webhookの要求を受信したときにチャネルに投稿する」テンプレート）
+// 経由でのみ発行できる。そちらのトリガーが期待するペイロード形式が下記のMessageCard形式と
+// 異なる場合は、buildPayload() をそのスキーマに合わせて調整すること。
+// また個人（コンシューマー）向けMicrosoftアカウントのTeamsにはチーム/チャネル/ワークフローの
+// 概念自体が無く、この機能は利用できない（組織向けTeamsのみ）。
+
 function buildPayload(payload: { eventType: string; data: Record<string, unknown> }) {
+  const { title, text } = buildNotificationMessage(payload.eventType, payload.data);
+
   return {
     "@type": "MessageCard",
     "@context": "http://schema.org/extensions",
-    summary: `社用車予約: ${payload.eventType}`,
+    summary: title,
     themeColor: "3D4A6B",
-    title: `社用車予約システム: ${payload.eventType}`,
-    text: Object.entries(payload.data)
-      .map(([key, value]) => `**${key}**: ${String(value)}`)
-      .join("\n\n"),
+    title,
+    text,
   };
 }
 

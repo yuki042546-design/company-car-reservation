@@ -330,6 +330,7 @@ const vi: Dictionary = {
     limitReachedNote: "Chỉ có thể đăng ký tối đa 4 xe.",
     genericError: "Cập nhật thất bại.",
     networkError: "Đã xảy ra lỗi kết nối.",
+    utilizationLabel: (rate: number) => `Tỷ lệ sử dụng (30 ngày qua): ${rate}%`,
   },
   userManager: {
     roleLabels: {
