@@ -164,6 +164,7 @@ export function VehicleStatusBanner({
                   type="number"
                   inputMode="numeric"
                   min={0}
+                  step={10}
                   required
                   value={returnOdometer}
                   onChange={(e) => setReturnOdometer(e.target.value)}
@@ -209,6 +210,7 @@ export function VehicleStatusBanner({
                       type="number"
                       inputMode="numeric"
                       min={0}
+                      step={10}
                       required
                       value={departureOdometer}
                       onChange={(e) => setDepartureOdometer(e.target.value)}
