@@ -129,6 +129,12 @@ const ja = {
     guideLink: "使い方を見る →",
     dismiss: "閉じる",
   },
+  myReminder: {
+    forgotDepart: (vehicleName: string, startTime: string) =>
+      `🚗 ${vehicleName}の予約(${startTime}開始)の出発操作がまだです。忘れずに「出発する」を押してください。`,
+    overdueReturn: (vehicleName: string, endTime: string) =>
+      `⚠️ ${vehicleName}の返却予定時刻(${endTime})を過ぎています。速やかに「返却する」を押してください。`,
+  },
   gantt: {
     rangeNote: (start: string, end: string) =>
       `表示範囲: ${start}〜${end}（日本時間）。ブロックをタップすると予約の変更画面を開きます。`,

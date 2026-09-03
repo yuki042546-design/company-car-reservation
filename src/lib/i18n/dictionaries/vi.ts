@@ -130,6 +130,12 @@ const vi: Dictionary = {
     guideLink: "Xem hướng dẫn sử dụng →",
     dismiss: "Đóng",
   },
+  myReminder: {
+    forgotDepart: (vehicleName: string, startTime: string) =>
+      `🚗 Bạn chưa bấm "Bắt đầu đi" cho lịch đặt ${vehicleName} (bắt đầu lúc ${startTime}). Đừng quên nhấn "Bắt đầu đi".`,
+    overdueReturn: (vehicleName: string, endTime: string) =>
+      `⚠️ Đã quá giờ trả xe ${vehicleName} (dự kiến ${endTime}). Vui lòng nhấn "Trả xe" ngay.`,
+  },
   gantt: {
     rangeNote: (start, end) =>
       `Khoảng hiển thị: ${start}–${end} (giờ Nhật Bản). Nhấn vào ô để mở màn hình chỉnh sửa đặt xe.`,

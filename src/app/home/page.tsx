@@ -12,6 +12,7 @@ import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { getActiveVehicles } from "@/lib/vehicles";
 import { FirstVisitGuideBanner } from "@/components/FirstVisitGuideBanner";
+import { MyReservationReminder } from "@/components/MyReservationReminder";
 import { SectionHeading } from "@/components/SectionHeading";
 import { TodayView } from "@/components/TodayView";
 import { TopScheduleToggle } from "@/components/TopScheduleToggle";
@@ -62,6 +63,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div className="space-y-8">
+      <MyReservationReminder />
       <FirstVisitGuideBanner />
 
       <div className="space-y-3">
