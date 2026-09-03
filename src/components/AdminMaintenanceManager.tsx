@@ -95,7 +95,7 @@ export function AdminMaintenanceManager({ vehicleId, blocks }: AdminMaintenanceM
         <div className="space-y-2 rounded-lg border border-danger-border bg-danger-soft p-3">
           <p className="text-sm font-semibold text-danger">{dict.maintenance.conflictListTitle}</p>
           {conflicts.map((r) => (
-            <ReservationCard key={r.id} reservation={r} dict={dict} locale={locale} showEditLink />
+            <ReservationCard key={r.id} reservation={r} dict={dict} locale={locale} showEditLink showDate />
           ))}
         </div>
       )}

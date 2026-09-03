@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 import type { Locale } from "@/lib/i18n/locales";
 import type { Reservation } from "@/lib/types";
-import { formatTimeJa } from "@/lib/dateUtils";
+import { formatDateTime, formatTimeJa } from "@/lib/dateUtils";
 import { displayDestination, displayPurpose } from "@/lib/displayText";
 
 interface ReservationCardProps {
@@ -15,6 +15,8 @@ interface ReservationCardProps {
   vehicleName?: string;
   /** 出発・返却時に記録された走行距離（km）。未記録・未返却ならnull/undefined。 */
   mileageKm?: number | null;
+  /** 日付ごとに見出しでグループ化されていない一覧（管理画面など）で、日付も表示する場合はtrue。 */
+  showDate?: boolean;
 }
 
 const STATUS_BADGE_CLASSES: Record<string, string> = {
@@ -33,6 +35,7 @@ export function ReservationCard({
   rightSlot,
   vehicleName,
   mileageKm,
+  showDate = false,
 }: ReservationCardProps) {
   const isTranslatedDestination =
     reservation.inputLocale !== locale && reservation.destinationTranslated !== null;
@@ -45,7 +48,8 @@ export function ReservationCard({
         <div className="min-w-0">
           <div className="flex flex-wrap items-baseline gap-x-2">
             <span className="font-mono text-base font-semibold tabular-nums text-gray-900">
-              {formatTimeJa(reservation.startTime)} 〜 {formatTimeJa(reservation.endTime)}
+              {showDate ? formatDateTime(reservation.startTime, locale) : formatTimeJa(reservation.startTime)} 〜{" "}
+              {formatTimeJa(reservation.endTime)}
             </span>
             <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-sm font-medium text-brand-600">
               {reservation.employeeName}

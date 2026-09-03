@@ -325,7 +325,7 @@ const vi: Dictionary = {
     employeesSectionTitle: "Quản lý danh sách nhân viên",
     usersSectionTitle: "Quản lý người dùng",
     noReservations: "Chưa có lịch đặt xe nào.",
-    searchPlaceholder: "Tìm theo tên người dùng, điểm đến, mục đích hoặc mã đặt xe",
+    searchPlaceholder: "Tìm theo tên người dùng, điểm đến hoặc mục đích",
     statusFilterAll: "Tất cả trạng thái",
     noSearchResults: "Không tìm thấy lịch đặt xe phù hợp.",
     countLabel: (n) => `Số lượng hiển thị: ${n}`,

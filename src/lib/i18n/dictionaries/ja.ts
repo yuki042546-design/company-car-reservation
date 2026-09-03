@@ -324,7 +324,7 @@ const ja = {
     employeesSectionTitle: "社員名リストの管理",
     usersSectionTitle: "ユーザー管理",
     noReservations: "予約はまだありません。",
-    searchPlaceholder: "利用者名・行き先・用途・予約IDで検索",
+    searchPlaceholder: "利用者名・行き先・用途で検索",
     statusFilterAll: "すべてのステータス",
     noSearchResults: "条件に一致する予約がありません。",
     countLabel: (n: number) => `表示件数: ${n}件`,

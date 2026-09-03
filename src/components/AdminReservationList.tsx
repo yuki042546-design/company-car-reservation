@@ -194,6 +194,7 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
                 locale={locale}
                 vehicleName={vehicleNames?.[r.vehicleId]}
                 showEditLink
+                showDate
                 rightSlot={
                   <button
                     onClick={() => handleDelete(r.id)}
