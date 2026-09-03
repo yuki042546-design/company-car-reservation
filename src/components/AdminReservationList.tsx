@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Reservation, ReservationStatus } from "@/lib/types";
+import { formatMonthLabel, getJstDateKey } from "@/lib/dateUtils";
 import { useI18n } from "./LocaleProvider";
 import { ReservationCard } from "./ReservationCard";
 
@@ -126,6 +127,18 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
 
   const allSelected = selectedIds.size > 0 && selectedIds.size === filtered.length;
 
+  // filtered は start_time の降順のため、月ごとにまとめても順序は保たれる。
+  const groups: { monthKey: string; items: Reservation[] }[] = [];
+  for (const r of filtered) {
+    const monthKey = getJstDateKey(r.startTime).slice(0, 7);
+    const group = groups[groups.length - 1];
+    if (group && group.monthKey === monthKey) {
+      group.items.push(r);
+    } else {
+      groups.push({ monthKey, items: [r] });
+    }
+  }
+
   return (
     <div className="space-y-2">
       {error && (
@@ -178,36 +191,45 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
           {dict.admin.noSearchResults}
         </p>
       ) : (
-        filtered.map((r) => (
-          <div key={r.id} className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              checked={selectedIds.has(r.id)}
-              onChange={() => toggleSelected(r.id)}
-              aria-label={dict.admin.selectRowLabel}
-              className="mt-4 h-4 w-4 shrink-0 rounded border-gray-300"
-            />
-            <div className="min-w-0 flex-1">
-              <ReservationCard
-                reservation={r}
-                dict={dict}
-                locale={locale}
-                vehicleName={vehicleNames?.[r.vehicleId]}
-                showEditLink
-                showDate
-                rightSlot={
-                  <button
-                    onClick={() => handleDelete(r.id)}
-                    disabled={deletingId === r.id}
-                    className="rounded-lg border border-danger-border bg-danger-soft px-3 py-1.5 text-sm text-danger hover:bg-danger-soft/70 disabled:opacity-50"
-                  >
-                    {deletingId === r.id ? dict.common.deleting : dict.common.delete}
-                  </button>
-                }
-              />
+        <div className="space-y-6">
+          {groups.map((group) => (
+            <div key={group.monthKey}>
+              <h3 className="mb-2 text-sm font-semibold text-gray-500">{formatMonthLabel(group.monthKey, locale)}</h3>
+              <div className="space-y-2">
+                {group.items.map((r) => (
+                  <div key={r.id} className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(r.id)}
+                      onChange={() => toggleSelected(r.id)}
+                      aria-label={dict.admin.selectRowLabel}
+                      className="mt-4 h-4 w-4 shrink-0 rounded border-gray-300"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <ReservationCard
+                        reservation={r}
+                        dict={dict}
+                        locale={locale}
+                        vehicleName={vehicleNames?.[r.vehicleId]}
+                        showEditLink
+                        showDate
+                        rightSlot={
+                          <button
+                            onClick={() => handleDelete(r.id)}
+                            disabled={deletingId === r.id}
+                            className="rounded-lg border border-danger-border bg-danger-soft px-3 py-1.5 text-sm text-danger hover:bg-danger-soft/70 disabled:opacity-50"
+                          >
+                            {deletingId === r.id ? dict.common.deleting : dict.common.delete}
+                          </button>
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
       <p className="pt-2 text-right text-xs text-gray-400">{dict.admin.countLabel(filtered.length)}</p>
     </div>
