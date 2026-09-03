@@ -1,7 +1,7 @@
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { formatDate } from "@/lib/dateUtils";
-import { getAllVehicles } from "@/lib/vehicles";
+import { getActiveVehicles } from "@/lib/vehicles";
 import { VehicleIcon } from "@/components/VehicleIcon";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,9 @@ export const dynamic = "force-dynamic";
 export default async function VehiclesPage() {
   const locale = getLocale();
   const dict = getDictionary(locale);
-  const vehicles = await getAllVehicles();
+  // 無効化した車両は実際には予約できないため、公開の車両情報ページにも
+  // 表示しない（「利用可能」と出るのに予約できない、という食い違いを防ぐ）。
+  const vehicles = await getActiveVehicles();
 
   const statusLabel: Record<string, string> = {
     available: dict.vehicleStatus.available,
