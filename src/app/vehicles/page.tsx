@@ -22,10 +22,6 @@ export default async function VehiclesPage() {
     return [
       { label: dict.vehicleInfo.plateNumberLabel, value: v.plateNumber },
       { label: dict.vehicleInfo.modelLabel, value: v.model },
-      {
-        label: dict.vehicleInfo.vehicleTypeLabel,
-        value: v.vehicleType ? dict.vehicleInfo.vehicleTypeLabels[v.vehicleType] : null,
-      },
       { label: dict.vehicleInfo.parkingLocationLabel, value: v.parkingLocation },
       { label: dict.vehicleInfo.keyLocationLabel, value: v.keyLocation },
       { label: dict.vehicleInfo.etcCardLocationLabel, value: v.etcCardLocation },
