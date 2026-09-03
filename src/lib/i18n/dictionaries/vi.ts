@@ -144,6 +144,8 @@ const vi: Dictionary = {
     selfPickerButton: "Hiển thị theo tên này",
     selfPickerFetchError: "Không thể tải danh sách nhân viên.",
     selfTabNameLabel: "Người đang xem",
+    unknownEmployeeName: (name: string) =>
+      `Không tìm thấy nhân viên tên "${name}". Vui lòng chọn lại tên của bạn từ danh sách phía trên.`,
   },
   reservationCard: {
     destination: "Điểm đến",

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getActiveEmployees, getFilteredReservations, getMileageByReservationIds, type ReservationListTab } from "@/lib/data";
+import { getAllEmployees, getFilteredReservations, getMileageByReservationIds, type ReservationListTab } from "@/lib/data";
 import { formatDate, isSameJstDate } from "@/lib/dateUtils";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -30,13 +30,18 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
   const page = Math.max(1, Number(searchParams.page) || 1);
   const employeeName = searchParams.name?.trim() || undefined;
 
-  const [{ reservations, hasMore }, vehicles, activeEmployees] = await Promise.all([
+  const [{ reservations, hasMore }, vehicles, allEmployees] = await Promise.all([
     getFilteredReservations({ tab, employeeName, page }),
     getAllVehicles(),
-    tab === "self" && employeeName ? getActiveEmployees() : Promise.resolve([]),
+    tab === "self" && employeeName ? getAllEmployees() : Promise.resolve([]),
   ]);
   const vehicleNames =
     vehicles.length > 1 ? Object.fromEntries(vehicles.map((v) => [v.id, v.name])) : undefined;
+  // 「自分の予約」タブの名前は自己申告のURLパラメータ由来のため、実在する社員名
+  // （現役・無効化済みいずれか）かどうかを確認し、でたらめな名前をそのまま
+  // 「予約はまだありません」として素通しさせないようにする。
+  const isKnownEmployeeName = !employeeName || allEmployees.some((emp) => emp.name === employeeName);
+  const activeEmployees = allEmployees.filter((emp) => emp.isActive);
   // 出発・返却が完了した予約だけ、記録済みの走行距離を表示する。
   const mileageByReservationId = await getMileageByReservationIds(reservations.map((r) => r.id));
 
@@ -78,7 +83,11 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
           {tab === "self" && employeeName && (
             <SelfTabNameSwitcher employees={activeEmployees} currentName={employeeName} />
           )}
-          {groups.length === 0 ? (
+          {tab === "self" && employeeName && !isKnownEmployeeName ? (
+            <p className="rounded-xl border border-dashed border-danger-border bg-danger-soft px-3 py-4 text-sm text-danger">
+              {dict.reservationsPage.unknownEmployeeName(employeeName)}
+            </p>
+          ) : groups.length === 0 ? (
             <p className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-4 text-sm text-gray-400">
               {dict.reservationsPage.empty}
             </p>

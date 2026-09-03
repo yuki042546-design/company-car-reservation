@@ -143,6 +143,8 @@ const ja = {
     selfPickerButton: "この名前で表示する",
     selfPickerFetchError: "社員一覧の取得に失敗しました。",
     selfTabNameLabel: "表示する使用者",
+    unknownEmployeeName: (name: string) =>
+      `「${name}」という名前の社員は登録されていません。上のプルダウンからご自身の名前を選び直してください。`,
   },
   reservationCard: {
     destination: "行き先",
