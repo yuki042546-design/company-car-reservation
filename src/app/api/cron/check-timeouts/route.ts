@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { mapReservationRow, type ReservationRow } from "@/lib/mappers";
 import { getVehicleById } from "@/lib/vehicles";
 import { writeAuditLog } from "@/lib/auditLog";
-import { enqueueNotification } from "@/lib/notifications/outbox";
+import { enqueueNotification, processPendingDeliveries } from "@/lib/notifications/outbox";
 import type { Reservation } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -57,6 +57,12 @@ export async function GET(request: NextRequest) {
 
   await notifyTransitions(supabase, (overdueRows as ReservationRow[]) ?? [], "overdue");
   await notifyTransitions(supabase, (noShowRows as ReservationRow[]) ?? [], "no_show");
+
+  // 通知の送信自体は本来 /api/cron/process-notifications（Vercel Cronで1日1回）が
+  // 担当するが、Vercel無料プランではそれが1日1回しか動かず、新着の予約通知等が
+  // 最大24時間滞留してしまう。このエンドポイントはSupabaseのpg_cronから15分おきに
+  // 呼ばれる想定のため、ついでに未送信の通知もここで処理してしまう。
+  await processPendingDeliveries(supabase);
 
   return NextResponse.json({
     ok: true,
