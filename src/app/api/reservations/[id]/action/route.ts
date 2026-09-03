@@ -198,7 +198,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         targetUserId: existing.ownerUserId,
         targetType: "reservation",
         targetId: existing.id,
-        data: { requestedEndTime: newEnd.toISOString(), reason: overlapping ? "overlap" : "maintenance_conflict" },
+        data: {
+          employeeName: existing.employeeName,
+          requestedEndTime: newEnd.toISOString(),
+          reason: overlapping ? "overlap" : "maintenance_conflict",
+        },
         idempotencyKey: `extend_failed:${existing.id}:${newEnd.toISOString()}`,
       });
       if (overlapping) {
@@ -220,7 +224,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         targetUserId: existing.ownerUserId,
         targetType: "reservation",
         targetId: existing.id,
-        data: { requestedEndTime: newEnd.toISOString(), reason: "db_error" },
+        data: { employeeName: existing.employeeName, requestedEndTime: newEnd.toISOString(), reason: "db_error" },
         idempotencyKey: `extend_failed:${existing.id}:${newEnd.toISOString()}`,
       });
       if (isExclusionViolation(error)) {
@@ -243,7 +247,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       targetUserId: existing.ownerUserId,
       targetType: "reservation",
       targetId: existing.id,
-      data: { newEndTime: newEnd.toISOString() },
+      data: { employeeName: existing.employeeName, newEndTime: newEnd.toISOString() },
       idempotencyKey: `extend_succeeded:${existing.id}:${newEnd.toISOString()}`,
     });
 

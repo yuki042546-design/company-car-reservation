@@ -172,7 +172,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       targetUserId: null,
       targetType: "reservation",
       targetId: updated.id,
-      data: { startTime: updated.startTime, endTime: updated.endTime, destination: updated.destination },
+      data: {
+        employeeName: updated.employeeName,
+        startTime: updated.startTime,
+        endTime: updated.endTime,
+        destination: updated.destination,
+      },
       idempotencyKey: `reservation_updated:${updated.id}:${updated.updatedAt}`,
     });
 
@@ -281,7 +286,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     targetUserId: null,
     targetType: "reservation",
     targetId: cancelled.id,
-    data: { startTime: existing.startTime, endTime: existing.endTime, destination: existing.destination },
+    data: {
+      employeeName: existing.employeeName,
+      startTime: existing.startTime,
+      endTime: existing.endTime,
+      destination: existing.destination,
+      cancellationReason: body.cancellationReason?.trim() || null,
+    },
     idempotencyKey: `reservation_cancelled:${cancelled.id}`,
   });
 
