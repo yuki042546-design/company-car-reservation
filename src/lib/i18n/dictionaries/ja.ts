@@ -96,6 +96,7 @@ const ja = {
     selfPickerPrompt: "「自分の予約」を表示するには、あなたの名前を選択してください。",
     selfPickerButton: "この名前で表示する",
     selfPickerFetchError: "社員一覧の取得に失敗しました。",
+    selfTabNameLabel: "表示する使用者",
   },
   reservationCard: {
     destination: "行き先",

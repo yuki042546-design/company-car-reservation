@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getFilteredReservations, getMileageByReservationIds, type ReservationListTab } from "@/lib/data";
+import { getActiveEmployees, getFilteredReservations, getMileageByReservationIds, type ReservationListTab } from "@/lib/data";
 import { formatDate, isSameJstDate } from "@/lib/dateUtils";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
@@ -7,6 +7,7 @@ import { getAllVehicles } from "@/lib/vehicles";
 import { ReservationCard } from "@/components/ReservationCard";
 import { SelfDeleteButton } from "@/components/SelfDeleteButton";
 import { SelfTabNamePicker } from "@/components/SelfTabNamePicker";
+import { SelfTabNameSwitcher } from "@/components/SelfTabNameSwitcher";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +30,10 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
   const page = Math.max(1, Number(searchParams.page) || 1);
   const employeeName = searchParams.name?.trim() || undefined;
 
-  const [{ reservations, hasMore }, vehicles] = await Promise.all([
+  const [{ reservations, hasMore }, vehicles, activeEmployees] = await Promise.all([
     getFilteredReservations({ tab, employeeName, page }),
     getAllVehicles(),
+    tab === "self" && employeeName ? getActiveEmployees() : Promise.resolve([]),
   ]);
   const vehicleNames =
     vehicles.length > 1 ? Object.fromEntries(vehicles.map((v) => [v.id, v.name])) : undefined;
@@ -71,31 +73,38 @@ export default async function AllReservationsPage({ searchParams }: AllReservati
 
       {tab === "self" && !employeeName ? (
         <SelfTabNamePicker />
-      ) : groups.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-4 text-sm text-gray-400">
-          {dict.reservationsPage.empty}
-        </p>
       ) : (
-        <div className="space-y-6">
-          {groups.map((g) => (
-            <div key={g.dateIso}>
-              <h3 className="mb-2 text-sm font-semibold text-gray-500">{formatDate(g.dateIso, locale)}</h3>
-              <div className="space-y-2">
-                {g.items.map((r) => (
-                  <ReservationCard
-                    key={r.id}
-                    reservation={r}
-                    dict={dict}
-                    locale={locale}
-                    vehicleName={vehicleNames?.[r.vehicleId]}
-                    mileageKm={mileageByReservationId[r.id] ?? null}
-                    rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
-                  />
-                ))}
-              </div>
+        <>
+          {tab === "self" && employeeName && (
+            <SelfTabNameSwitcher employees={activeEmployees} currentName={employeeName} />
+          )}
+          {groups.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-gray-200 bg-white px-3 py-4 text-sm text-gray-400">
+              {dict.reservationsPage.empty}
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {groups.map((g) => (
+                <div key={g.dateIso}>
+                  <h3 className="mb-2 text-sm font-semibold text-gray-500">{formatDate(g.dateIso, locale)}</h3>
+                  <div className="space-y-2">
+                    {g.items.map((r) => (
+                      <ReservationCard
+                        key={r.id}
+                        reservation={r}
+                        dict={dict}
+                        locale={locale}
+                        vehicleName={vehicleNames?.[r.vehicleId]}
+                        mileageKm={mileageByReservationId[r.id] ?? null}
+                        rightSlot={<SelfDeleteButton reservationId={r.id} ownerName={r.employeeName} />}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {hasMore && (

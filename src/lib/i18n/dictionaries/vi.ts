@@ -97,6 +97,7 @@ const vi: Dictionary = {
     selfPickerPrompt: "Để xem \"Lịch của tôi\", vui lòng chọn tên của bạn.",
     selfPickerButton: "Hiển thị theo tên này",
     selfPickerFetchError: "Không thể tải danh sách nhân viên.",
+    selfTabNameLabel: "Người đang xem",
   },
   reservationCard: {
     destination: "Điểm đến",
