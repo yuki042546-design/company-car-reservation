@@ -43,12 +43,14 @@ export interface ReservationInput {
 }
 
 export type VehicleStatus = "available" | "in_use" | "maintenance" | "out_of_service";
+export type VehicleType = "sedan" | "wagon" | "kei" | "van" | "truck";
 
 export interface Vehicle {
   id: string;
   name: string;
   plateNumber: string | null;
   model: string | null;
+  vehicleType: VehicleType | null;
   parkingLocation: string | null;
   keyLocation: string | null;
   etcCardLocation: string | null;

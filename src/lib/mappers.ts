@@ -14,6 +14,7 @@ import type {
   Role,
   Vehicle,
   VehicleStatus,
+  VehicleType,
   VehicleUsageRecord,
 } from "./types";
 
@@ -131,6 +132,7 @@ export interface VehicleRow {
   roadside_assistance_contact: string | null;
   notes: string | null;
   status: VehicleStatus;
+  vehicle_type: VehicleType | null;
   active: boolean;
   inspection_due_date: string | null;
   insurance_due_date: string | null;
@@ -147,6 +149,7 @@ export function mapVehicleRow(row: VehicleRow): Vehicle {
     name: row.name,
     plateNumber: row.plate_number,
     model: row.model,
+    vehicleType: row.vehicle_type,
     parkingLocation: row.parking_location,
     keyLocation: row.key_location,
     etcCardLocation: row.etc_card_location,

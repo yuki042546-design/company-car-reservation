@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
   const stringFields = [
     "plateNumber",
     "model",
+    "vehicleType",
     "parkingLocation",
     "keyLocation",
     "etcCardLocation",
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
   const columnNameByField: Record<(typeof stringFields)[number], string> = {
     plateNumber: "plate_number",
     model: "model",
+    vehicleType: "vehicle_type",
     parkingLocation: "parking_location",
     keyLocation: "key_location",
     etcCardLocation: "etc_card_location",

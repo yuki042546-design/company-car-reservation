@@ -2,6 +2,7 @@ import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { formatDate } from "@/lib/dateUtils";
 import { getAllVehicles } from "@/lib/vehicles";
+import { VehicleIcon } from "@/components/VehicleIcon";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,10 @@ export default async function VehiclesPage() {
     return [
       { label: dict.vehicleInfo.plateNumberLabel, value: v.plateNumber },
       { label: dict.vehicleInfo.modelLabel, value: v.model },
+      {
+        label: dict.vehicleInfo.vehicleTypeLabel,
+        value: v.vehicleType ? dict.vehicleInfo.vehicleTypeLabels[v.vehicleType] : null,
+      },
       { label: dict.vehicleInfo.parkingLocationLabel, value: v.parkingLocation },
       { label: dict.vehicleInfo.keyLocationLabel, value: v.keyLocation },
       { label: dict.vehicleInfo.etcCardLocationLabel, value: v.etcCardLocation },
@@ -64,7 +69,10 @@ export default async function VehiclesPage() {
         vehicles.map((vehicle) => (
           <section key={vehicle.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 className="text-base font-bold tracking-tight text-gray-900">{vehicle.name}</h2>
+              <div className="flex items-center gap-2">
+                <VehicleIcon type={vehicle.vehicleType} />
+                <h2 className="text-base font-bold tracking-tight text-gray-900">{vehicle.name}</h2>
+              </div>
               <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-bold text-brand-700">
                 {statusLabel[vehicle.status] ?? vehicle.status}
               </span>

@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { Vehicle } from "@/lib/types";
+import type { Vehicle, VehicleType } from "@/lib/types";
+import { VehicleIcon, VEHICLE_TYPES } from "./VehicleIcon";
 import { useI18n } from "./LocaleProvider";
 
 interface AdminVehicleManagerProps {
@@ -17,6 +18,7 @@ interface NewVehicleFields {
   name: string;
   plateNumber: string;
   model: string;
+  vehicleType: VehicleType | "";
   parkingLocation: string;
   keyLocation: string;
   etcCardLocation: string;
@@ -36,6 +38,7 @@ const EMPTY_FIELDS: NewVehicleFields = {
   name: "",
   plateNumber: "",
   model: "",
+  vehicleType: "",
   parkingLocation: "",
   keyLocation: "",
   etcCardLocation: "",
@@ -78,6 +81,30 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !vehicle.active }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.errors?.[0] ?? dict.vehicleManager.genericError);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError(dict.vehicleManager.networkError);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  // 車両詳細の編集は基本的にSupabase Table Editor経由だが、車種タイプだけは
+  // アイコン表示のためこの画面からも変更できるようにしておく（既存車両にも設定できるように）。
+  async function updateVehicleType(vehicle: Vehicle, vehicleType: VehicleType | "") {
+    setError(null);
+    setBusyId(vehicle.id);
+    try {
+      const res = await fetch(`/api/vehicles/${vehicle.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehicleType }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -154,11 +181,27 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
         {vehicles.length === 0 && <li className="px-4 py-3 text-sm text-gray-500">{dict.vehicleInfo.empty}</li>}
         {vehicles.map((v) => (
           <li key={v.id} className="flex items-center justify-between gap-3 px-4 py-3">
-            <div className="min-w-0">
-              <div className={v.active ? "text-gray-800" : "text-gray-400 line-through"}>{v.name}</div>
-              <div className="mt-0.5 text-xs text-gray-400">{statusLabel[v.status] ?? v.status}</div>
-              <div className="mt-0.5 text-xs text-gray-400">
-                {dict.vehicleManager.utilizationLabel(utilizationRates[v.id] ?? 0)}
+            <div className="flex min-w-0 items-center gap-2">
+              <VehicleIcon type={v.vehicleType} className="h-8 w-8 shrink-0" />
+              <div className="min-w-0">
+                <div className={v.active ? "text-gray-800" : "text-gray-400 line-through"}>{v.name}</div>
+                <div className="mt-0.5 text-xs text-gray-400">{statusLabel[v.status] ?? v.status}</div>
+                <div className="mt-0.5 text-xs text-gray-400">
+                  {dict.vehicleManager.utilizationLabel(utilizationRates[v.id] ?? 0)}
+                </div>
+                <select
+                  value={v.vehicleType ?? ""}
+                  onChange={(e) => updateVehicleType(v, e.target.value as VehicleType | "")}
+                  disabled={busyId === v.id}
+                  className="mt-1 rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-600 disabled:opacity-50"
+                >
+                  <option value="">{dict.vehicleInfo.vehicleTypeUnset}</option>
+                  {VEHICLE_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {dict.vehicleInfo.vehicleTypeLabels[t]}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <button
@@ -188,6 +231,18 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
             placeholder={dict.vehicleInfo.nameLabel}
             className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm"
           />
+          <select
+            value={fields.vehicleType}
+            onChange={(e) => updateField("vehicleType", e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-sm text-gray-700"
+          >
+            <option value="">{dict.vehicleInfo.vehicleTypeLabel}</option>
+            {VEHICLE_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {dict.vehicleInfo.vehicleTypeLabels[t]}
+              </option>
+            ))}
+          </select>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {textFields.map((f) => (
               <input
