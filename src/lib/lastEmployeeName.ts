@@ -7,3 +7,8 @@ export function rememberEmployeeName(name: string) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(LAST_EMPLOYEE_NAME_KEY, name);
 }
+
+export function getRememberedEmployeeName(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(LAST_EMPLOYEE_NAME_KEY);
+}

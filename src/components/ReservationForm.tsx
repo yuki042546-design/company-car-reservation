@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Employee, Reservation, Vehicle } from "@/lib/types";
 import {
   addMinutesToDatetimeLocal,
@@ -14,7 +14,7 @@ import {
   START_TIME_SLOT_OPTIONS,
 } from "@/lib/dateUtils";
 import { validateReservationInput } from "@/lib/reservationRules";
-import { rememberEmployeeName } from "@/lib/lastEmployeeName";
+import { getRememberedEmployeeName, rememberEmployeeName } from "@/lib/lastEmployeeName";
 import { DateTimeSelect } from "./DateTimeSelect";
 import { DurationSelect, type DurationValue } from "./DurationSelect";
 import { EmployeeCombobox } from "./EmployeeCombobox";
@@ -110,7 +110,19 @@ export function ReservationForm({
     return [...START_TIME_SLOT_OPTIONS, time].sort();
   }, [initial]);
 
-  const [employeeName, setEmployeeName] = useState(initial?.employeeName ?? employees[0]?.name ?? "");
+  // 新規予約の使用者名は、社員リストの先頭の人などを勝手に初期値にはしない
+  // （誰か別の人の名前のまま送信してしまう事故につながるため）。空欄から始め、
+  // この端末で最後に使われた名前が今も有効な社員であれば、便宜上それだけ補う。
+  const [employeeName, setEmployeeName] = useState(initial?.employeeName ?? "");
+
+  useEffect(() => {
+    if (initial || employeeName) return;
+    const remembered = getRememberedEmployeeName();
+    if (remembered && employees.some((emp) => emp.name === remembered)) {
+      setEmployeeName(remembered);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [vehicleId, setVehicleId] = useState(initial?.vehicleId ?? vehicles[0]?.id ?? "");
   const [startTime, setStartTime] = useState(
     initial ? isoToDatetimeLocal(initial.startTime) : defaultStart(initialDate)
