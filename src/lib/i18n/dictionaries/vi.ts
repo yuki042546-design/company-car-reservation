@@ -122,6 +122,14 @@ const vi: Dictionary = {
     prevMonth: "Tháng trước",
     nextMonth: "Tháng sau",
   },
+  onboarding: {
+    title: "Dành cho người mới sử dụng lần đầu",
+    point1: "Khi bắt đầu đi và khi trả xe, bắt buộc phải nhập số km (công-tơ-mét).",
+    point2: "Nếu không thấy tên của bạn trong danh sách người sử dụng, hãy nhờ quản trị viên thêm vào.",
+    point3: "Nếu không thao tác bắt đầu đi/trả xe trong thời gian đã đặt, trạng thái sẽ tự động chuyển thành \"trả xe trễ\" hoặc \"không sử dụng\".",
+    guideLink: "Xem hướng dẫn sử dụng →",
+    dismiss: "Đóng",
+  },
   gantt: {
     rangeNote: (start, end) =>
       `Khoảng hiển thị: ${start}–${end} (giờ Nhật Bản). Nhấn vào ô để mở màn hình chỉnh sửa đặt xe.`,

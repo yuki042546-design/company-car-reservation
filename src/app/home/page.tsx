@@ -11,6 +11,7 @@ import { getJstDateKey, getMonthRangeJst, getThisWeekRangeJst, getTodayRangeJst,
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
 import { getActiveVehicles } from "@/lib/vehicles";
+import { FirstVisitGuideBanner } from "@/components/FirstVisitGuideBanner";
 import { SectionHeading } from "@/components/SectionHeading";
 import { TodayView } from "@/components/TodayView";
 import { TopScheduleToggle } from "@/components/TopScheduleToggle";
@@ -61,6 +62,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <div className="space-y-8">
+      <FirstVisitGuideBanner />
+
       <div className="space-y-3">
         {vehicleBanners.map(({ vehicle, currentUsage, nextReservation, departureOdometer }) => (
           <VehicleStatusBanner
