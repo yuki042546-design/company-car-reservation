@@ -31,7 +31,7 @@ const MESSAGE_BUILDERS: Record<string, (data: Record<string, unknown>) => { titl
     text: `${d.vehicleName}（利用者: ${d.employeeName}）が返却予定時刻を過ぎても返却されていません。\n\n返却予定時刻: ${formatDateTime(d.endTime)}\n行き先: ${d.destination}`,
   }),
   reservation_no_show: (d) => ({
-    title: "❓ 未使用（No-show）",
+    title: "❓ 未出発",
     text: `${d.employeeName}さんの${d.vehicleName}予約が、開始時刻を過ぎても出発操作が行われていません。\n\n開始予定時刻: ${formatDateTime(d.startTime)}\n行き先: ${d.destination}`,
   }),
   reservation_updated: (d) => ({

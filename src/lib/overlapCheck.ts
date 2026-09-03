@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// 重複判定の対象となる予約ステータス（キャンセル済み・完了・無断キャンセルは対象外）。
+// 重複判定の対象となる予約ステータス（キャンセル済み・完了・未出発は対象外）。
 // DB側の部分排他制約（no_overlapping_reservations の WHERE句）と必ず一致させること。
 const ACTIVE_RESERVATION_STATUSES = ["reserved", "in_use", "overdue"];
 

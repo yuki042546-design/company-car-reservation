@@ -76,7 +76,7 @@ const vi: Dictionary = {
           },
           {
             title: "⑦ Điều gì xảy ra nếu không đúng giờ",
-            body: "Nếu quá giờ trả xe dự kiến mà chưa bấm \"Trả xe\", lịch đặt xe đó sẽ tự động chuyển sang trạng thái \"Trả xe trễ\" và quản trị viên sẽ nhận được thông báo. Ngoài ra, nếu quá 30 phút kể từ giờ bắt đầu mà chưa bấm \"Bắt đầu đi\", lịch đặt xe sẽ tự động chuyển sang trạng thái \"Không sử dụng\" và quản trị viên cũng sẽ được thông báo. Nếu kế hoạch thay đổi, vui lòng sửa hoặc hủy lịch đặt xe trước.",
+            body: "Nếu quá giờ trả xe dự kiến mà chưa bấm \"Trả xe\", lịch đặt xe đó sẽ tự động chuyển sang trạng thái \"Trả xe trễ\" và quản trị viên sẽ nhận được thông báo. Ngoài ra, nếu quá 30 phút kể từ giờ bắt đầu mà chưa bấm \"Bắt đầu đi\", lịch đặt xe sẽ tự động chuyển sang trạng thái \"Chưa xuất phát\" và quản trị viên cũng sẽ được thông báo. Nếu kế hoạch thay đổi, vui lòng sửa hoặc hủy lịch đặt xe trước.",
             highlight: true,
           },
         ],
@@ -101,7 +101,7 @@ const vi: Dictionary = {
         steps: [
           {
             title: "⑩ Chức năng quản trị",
-            body: "Trang quản trị (cần đăng nhập bằng mật khẩu chung) cho phép quản lý và đính chính tất cả lịch đặt xe, quản lý danh sách nhân viên, đăng ký/quản lý xe (bao gồm xem tỷ lệ sử dụng của từng xe), đăng ký lịch bảo trì/ngừng sử dụng, xem lịch sử sử dụng và nhật ký kiểm toán. Kết quả tự động phát hiện trả xe trễ/không sử dụng cũng sẽ được gửi tới kênh Slack/Teams đã cài đặt.",
+            body: "Trang quản trị (cần đăng nhập bằng mật khẩu chung) cho phép quản lý và đính chính tất cả lịch đặt xe, quản lý danh sách nhân viên, đăng ký/quản lý xe (bao gồm xem tỷ lệ sử dụng của từng xe), đăng ký lịch bảo trì/ngừng sử dụng, xem lịch sử sử dụng và nhật ký kiểm toán. Kết quả tự động phát hiện trả xe trễ/chưa xuất phát cũng sẽ được gửi tới kênh Slack/Teams đã cài đặt.",
             highlight: false,
           },
         ],
@@ -126,7 +126,7 @@ const vi: Dictionary = {
     title: "Dành cho người mới sử dụng lần đầu",
     point1: "Khi bắt đầu đi và khi trả xe, bắt buộc phải nhập số km (công-tơ-mét).",
     point2: "Nếu không thấy tên của bạn trong danh sách người sử dụng, hãy nhờ quản trị viên thêm vào.",
-    point3: "Nếu không thao tác bắt đầu đi/trả xe trong thời gian đã đặt, trạng thái sẽ tự động chuyển thành \"trả xe trễ\" hoặc \"không sử dụng\".",
+    point3: "Nếu không thao tác bắt đầu đi/trả xe trong thời gian đã đặt, trạng thái sẽ tự động chuyển thành \"trả xe trễ\" hoặc \"chưa xuất phát\".",
     guideLink: "Xem hướng dẫn sử dụng →",
     dismiss: "Đóng",
   },
@@ -294,7 +294,7 @@ const vi: Dictionary = {
       in_use: "Đang sử dụng",
       completed: "Đã hoàn thành",
       cancelled: "Đã hủy",
-      no_show: "Không đến lấy xe",
+      no_show: "Chưa xuất phát",
       overdue: "Trả xe trễ",
     },
     sectionTitle: "Tình trạng xe công ty",
