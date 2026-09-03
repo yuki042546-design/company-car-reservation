@@ -11,6 +11,11 @@ body {
   color: #1c2027;
   font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", ui-sans-serif,
     system-ui, sans-serif;
+  /* 日付・車種名など英数字混じりの文言が、文節でない位置（数字の途中など）で
+     折り返されないようにする。折り返しどころが無い長い文字列は overflow-wrap で
+     はみ出し防止のフォールバックとして許容する。 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* スマホでタップしやすいよう、フォーム部品の最小サイズを確保 */
