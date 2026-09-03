@@ -58,27 +58,37 @@ export async function getRecentReservations(limit = 200): Promise<Reservation[]>
   return (data as ReservationRow[]).map(mapReservationRow);
 }
 
-export async function getReservationsInRange(start: Date, end: Date): Promise<Reservation[]> {
+export async function getReservationsInRange(
+  start: Date,
+  end: Date,
+  options: { excludeCompleted?: boolean } = {}
+): Promise<Reservation[]> {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  let query = supabase
     .from("reservations")
     .select("*")
     .lt("start_time", end.toISOString())
     .gt("end_time", start.toISOString())
-    .neq("status", "cancelled")
-    .order("start_time", { ascending: true });
+    .neq("status", "cancelled");
+  if (options.excludeCompleted) {
+    query = query.neq("status", "completed");
+  }
+  const { data, error } = await query.order("start_time", { ascending: true });
   if (error) throw error;
   return (data as ReservationRow[]).map(mapReservationRow);
 }
 
+// トップページの「本日の予約」「今週の予約」は、残り・進行中の予約を把握するための
+// 一覧のため、利用完了済みの予約は表示しない（記録自体は/reservations・管理画面の
+// 利用履歴に残る）。
 export async function getTodayReservations(): Promise<Reservation[]> {
   const { start, end } = getTodayRangeJst();
-  return getReservationsInRange(start, end);
+  return getReservationsInRange(start, end, { excludeCompleted: true });
 }
 
 export async function getThisWeekReservations(): Promise<Reservation[]> {
   const { start, end } = getThisWeekRangeJst();
-  return getReservationsInRange(start, end);
+  return getReservationsInRange(start, end, { excludeCompleted: true });
 }
 
 export async function getReservationById(id: string): Promise<Reservation | null> {
