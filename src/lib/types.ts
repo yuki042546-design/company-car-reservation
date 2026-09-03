@@ -43,7 +43,7 @@ export interface ReservationInput {
 }
 
 export type VehicleStatus = "available" | "in_use" | "maintenance" | "out_of_service";
-export type VehicleType = "sedan" | "wagon" | "kei" | "van" | "truck";
+export type VehicleType = "hiace" | "prius" | "eqs" | "kei";
 
 export interface Vehicle {
   id: string;

@@ -271,7 +271,7 @@ create table if not exists vehicles (
   roadside_assistance_contact text,
   notes text,
   status text not null default 'available' check (status in ('available', 'in_use', 'maintenance', 'out_of_service')),
-  vehicle_type text check (vehicle_type in ('sedan', 'wagon', 'kei', 'van', 'truck')),
+  vehicle_type text check (vehicle_type in ('hiace', 'prius', 'eqs', 'kei')),
   active boolean not null default true,
   inspection_due_date date,
   insurance_due_date date,

@@ -182,7 +182,7 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
         {vehicles.map((v) => (
           <li key={v.id} className="flex items-center justify-between gap-3 px-4 py-3">
             <div className="flex min-w-0 items-center gap-2">
-              <VehicleIcon type={v.vehicleType} className="h-8 w-8 shrink-0" />
+              <VehicleIcon type={v.vehicleType} className="w-20" />
               <div className="min-w-0">
                 <div className={v.active ? "text-gray-800" : "text-gray-400 line-through"}>{v.name}</div>
                 <div className="mt-0.5 text-xs text-gray-400">{statusLabel[v.status] ?? v.status}</div>

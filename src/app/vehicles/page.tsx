@@ -69,8 +69,8 @@ export default async function VehiclesPage() {
         vehicles.map((vehicle) => (
           <section key={vehicle.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <VehicleIcon type={vehicle.vehicleType} />
+              <div className="flex items-center gap-3">
+                <VehicleIcon type={vehicle.vehicleType} className="w-32" />
                 <h2 className="text-base font-bold tracking-tight text-gray-900">{vehicle.name}</h2>
               </div>
               <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-bold text-brand-700">
