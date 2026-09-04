@@ -39,21 +39,27 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const locale = getLocale();
   const dict = getDictionary(locale);
   const now = new Date();
-  const [today, week] = await Promise.all([getTodayReservations(), getThisWeekReservations()]);
   const { start: weekStart } = getThisWeekRangeJst();
   const { start: todayStart } = getTodayRangeJst();
-
   const { start: monthStart, end: monthEnd, monthKey } = getMonthRangeJst(searchParams.month);
-  const monthReservations = await getReservationsInRange(monthStart, monthEnd);
 
-  const vehicles = await getActiveVehicles();
+  // 互いに依存しないクエリはすべて同時に投げる（直列に await すると往復回数分
+  // 表示が遅くなるため）。車両ごとのバナー情報だけは、車両一覧の取得後でないと
+  // 何を取得すべきか分からないため、この後で改めて並列取得する。
+  const [today, week, monthReservations, vehicles] = await Promise.all([
+    getTodayReservations(),
+    getThisWeekReservations(),
+    getReservationsInRange(monthStart, monthEnd),
+    getActiveVehicles(),
+  ]);
+
   const vehicleBanners = await Promise.all(
     vehicles.map(async (vehicle) => {
-      const currentUsage = await getCurrentUsageReservation(vehicle.id);
-      const [nextReservation, departureOdometer] = await Promise.all([
+      const [currentUsage, nextReservation] = await Promise.all([
+        getCurrentUsageReservation(vehicle.id),
         getNextReservation(vehicle.id, now),
-        currentUsage ? getOpenUsageRecordDepartureOdometer(currentUsage.id) : Promise.resolve(null),
       ]);
+      const departureOdometer = currentUsage ? await getOpenUsageRecordDepartureOdometer(currentUsage.id) : null;
       return { vehicle, currentUsage, nextReservation, departureOdometer };
     })
   );
