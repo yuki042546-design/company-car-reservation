@@ -417,10 +417,9 @@ const ja = {
     genericError: "更新に失敗しました。",
     networkError: "通信エラーが発生しました。",
     utilizationLabel: (rate: number) => `稼働率(直近30日): ${rate}%`,
-    trackMileageStatusOn: "走行距離記録: オン",
-    trackMileageStatusOff: "走行距離記録: オフ",
-    trackMileageToggleToOff: "走行距離を記録しない設定にする",
-    trackMileageToggleToOn: "走行距離を記録する設定に戻す",
+    trackMileageGroupLabel: "走行距離記録",
+    trackMileageOnLabel: "記録する",
+    trackMileageOffLabel: "記録しない",
     trackMileageCheckboxLabel: "出発・返却時に走行距離の入力を必須にする",
   },
   userManager: {

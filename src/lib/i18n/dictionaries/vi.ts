@@ -418,10 +418,9 @@ const vi: Dictionary = {
     genericError: "Cập nhật thất bại.",
     networkError: "Đã xảy ra lỗi kết nối.",
     utilizationLabel: (rate: number) => `Tỷ lệ sử dụng (30 ngày qua): ${rate}%`,
-    trackMileageStatusOn: "Ghi số km: Bật",
-    trackMileageStatusOff: "Ghi số km: Tắt",
-    trackMileageToggleToOff: "Chuyển sang không ghi số km",
-    trackMileageToggleToOn: "Chuyển lại sang ghi số km",
+    trackMileageGroupLabel: "Ghi số km",
+    trackMileageOnLabel: "Có",
+    trackMileageOffLabel: "Không",
     trackMileageCheckboxLabel: "Bắt buộc nhập số km khi bắt đầu đi / trả xe",
   },
   userManager: {

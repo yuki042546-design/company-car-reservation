@@ -97,14 +97,15 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
     }
   }
 
-  async function toggleTrackMileage(vehicle: Vehicle) {
+  async function setTrackMileage(vehicle: Vehicle, trackMileage: boolean) {
+    if (vehicle.trackMileage === trackMileage) return;
     setError(null);
     setBusyId(vehicle.id);
     try {
       const res = await fetch(`/api/vehicles/${vehicle.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trackMileage: !vehicle.trackMileage }),
+        body: JSON.stringify({ trackMileage }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -213,9 +214,6 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
                 <div className="mt-0.5 text-xs text-gray-400">
                   {dict.vehicleManager.utilizationLabel(utilizationRates[v.id] ?? 0)}
                 </div>
-                <div className="mt-0.5 text-xs text-gray-400">
-                  {v.trackMileage ? dict.vehicleManager.trackMileageStatusOn : dict.vehicleManager.trackMileageStatusOff}
-                </div>
                 <select
                   value={v.vehicleType ?? ""}
                   onChange={(e) => updateVehicleType(v, e.target.value as VehicleType | "")}
@@ -243,13 +241,35 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
               >
                 {v.active ? dict.vehicleManager.deactivate : dict.vehicleManager.activate}
               </button>
-              <button
-                onClick={() => toggleTrackMileage(v)}
-                disabled={busyId === v.id}
-                className="rounded-lg border border-gray-300 px-3 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              >
-                {v.trackMileage ? dict.vehicleManager.trackMileageToggleToOff : dict.vehicleManager.trackMileageToggleToOn}
-              </button>
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-xs text-gray-400">{dict.vehicleManager.trackMileageGroupLabel}</span>
+                <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5 text-xs">
+                  <button
+                    onClick={() => setTrackMileage(v, true)}
+                    disabled={busyId === v.id}
+                    aria-pressed={v.trackMileage}
+                    className={
+                      v.trackMileage
+                        ? "rounded-md bg-brand-600 px-2 py-1 font-semibold text-white disabled:opacity-50"
+                        : "rounded-md px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                    }
+                  >
+                    {dict.vehicleManager.trackMileageOnLabel}
+                  </button>
+                  <button
+                    onClick={() => setTrackMileage(v, false)}
+                    disabled={busyId === v.id}
+                    aria-pressed={!v.trackMileage}
+                    className={
+                      !v.trackMileage
+                        ? "rounded-md bg-brand-600 px-2 py-1 font-semibold text-white disabled:opacity-50"
+                        : "rounded-md px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                    }
+                  >
+                    {dict.vehicleManager.trackMileageOffLabel}
+                  </button>
+                </div>
+              </div>
             </div>
           </li>
         ))}
