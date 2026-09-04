@@ -54,28 +54,33 @@ const vi: Dictionary = {
             body: "Với lịch đặt xe chưa bắt đầu, bạn có thể tự sửa hoặc hủy từ nút \"Sửa\" hoặc \"Hủy lịch đặt xe\" trên thẻ đặt xe (chọn đúng tên đã dùng khi đặt để xác nhận là chính chủ). Lịch đã hủy sẽ không còn hiển thị trong danh sách. Việc đính chính lịch đã bắt đầu/đã sử dụng xong, hoặc hủy lịch do người khác đặt, chỉ quản trị viên mới thực hiện được, và bắt buộc phải nhập lý do (sẽ được lưu lại).",
             highlight: false,
           },
+          {
+            title: "④ Nhắc nhở cho lịch đặt xe của bạn",
+            body: "Nếu có lịch đặt xe mà bạn quên chưa bấm \"Bắt đầu đi\" hoặc \"Trả xe\", một thông báo sẽ tự động hiện ở đầu trang chủ (màu cam nếu đã quá giờ bắt đầu mà chưa bấm \"Bắt đầu đi\", màu đỏ nếu đã quá giờ trả xe mà chưa bấm \"Trả xe\"). Thông báo này hiển thị dựa vào tên bạn đã chọn gần nhất trên thiết bị đang dùng, nên nếu dùng chung máy tính/máy tính bảng và tên hiển thị là của người khác, thông báo có thể sẽ không xuất hiện.",
+            highlight: false,
+          },
         ],
       },
       {
         title: "Quy tắc khi bắt đầu đi và trả xe (quan trọng)",
         steps: [
           {
-            title: "④ Bắt đầu đi (bắt buộc nhập số km)",
+            title: "⑤ Bắt đầu đi (bắt buộc nhập số km)",
             body: "Khi đến giờ đặt xe, hãy nhấn \"Bắt đầu đi\" ở phần trạng thái xe trên trang chủ. Trước khi nhấn, bạn phải nhập số km hiển thị trên đồng hồ công-tơ-mét của xe vào ô \"Số km khi xuất phát\". Nếu chưa nhập, nút sẽ không bấm được. Đây là quy tắc để ghi lại chính xác quãng đường xe đã đi.",
             highlight: true,
           },
           {
-            title: "⑤ Trả xe (bắt buộc nhập số km)",
+            title: "⑥ Trả xe (bắt buộc nhập số km)",
             body: "Khi trả xe, cũng nhập số km trên công-tơ-mét vào ô \"Số km khi trả xe\" rồi nhấn \"Trả xe\". Màn hình sẽ hiển thị lại số km lúc xuất phát để bạn đối chiếu. Nếu số km khi trả nhỏ hơn khi xuất phát, hệ thống sẽ báo lỗi (do nghi ngờ nhập sai) và không cho đăng ký — hãy kiểm tra lại và nhập lại số đúng.",
             highlight: true,
           },
           {
-            title: "⑥ Gia hạn thời gian sử dụng",
+            title: "⑦ Gia hạn thời gian sử dụng",
             body: "Nếu cần sử dụng lâu hơn dự kiến, nhấn \"Gia hạn\" để kéo dài thời gian trả xe thêm 1 tiếng. Không thể gia hạn nếu khung giờ đó đã có người khác đặt trước.",
             highlight: false,
           },
           {
-            title: "⑦ Điều gì xảy ra nếu không đúng giờ",
+            title: "⑧ Điều gì xảy ra nếu không đúng giờ",
             body: "Nếu quá giờ trả xe dự kiến mà chưa bấm \"Trả xe\", lịch đặt xe đó sẽ tự động chuyển sang trạng thái \"Trả xe trễ\" và quản trị viên sẽ nhận được thông báo. Ngoài ra, nếu quá 30 phút kể từ giờ bắt đầu mà chưa bấm \"Bắt đầu đi\", lịch đặt xe sẽ tự động chuyển sang trạng thái \"Chưa xuất phát\" và quản trị viên cũng sẽ được thông báo. Nếu kế hoạch thay đổi, vui lòng sửa hoặc hủy lịch đặt xe trước.",
             highlight: true,
           },
@@ -85,12 +90,12 @@ const vi: Dictionary = {
         title: "Chức năng khác",
         steps: [
           {
-            title: "⑧ Xem thông tin xe",
+            title: "⑨ Xem thông tin xe",
             body: "Ở tab \"Thông tin xe\", bạn có thể xem biển số, vị trí đỗ xe, nơi cất chìa khóa, liên hệ khẩn cấp, hạn đăng kiểm/bảo hiểm của từng xe.",
             highlight: false,
           },
           {
-            title: "⑨ Chuyển đổi ngôn ngữ",
+            title: "⑩ Chuyển đổi ngôn ngữ",
             body: "Dùng nút ngôn ngữ ở góc trên bên phải màn hình để chuyển đổi giữa tiếng Nhật và tiếng Việt.",
             highlight: false,
           },
@@ -100,8 +105,8 @@ const vi: Dictionary = {
         title: "Chức năng quản trị",
         steps: [
           {
-            title: "⑩ Chức năng quản trị",
-            body: "Trang quản trị (cần đăng nhập bằng mật khẩu chung) cho phép quản lý và đính chính tất cả lịch đặt xe, quản lý danh sách nhân viên, đăng ký/quản lý xe (bao gồm xem tỷ lệ sử dụng của từng xe), đăng ký lịch bảo trì/ngừng sử dụng, xem lịch sử sử dụng và nhật ký kiểm toán. Kết quả tự động phát hiện trả xe trễ/chưa xuất phát cũng sẽ được gửi tới kênh Slack/Teams đã cài đặt.",
+            title: "⑪ Chức năng quản trị",
+            body: "Trang quản trị (cần đăng nhập bằng mật khẩu chung) cho phép quản lý và đính chính tất cả lịch đặt xe, quản lý danh sách nhân viên, đăng ký/quản lý xe (bao gồm xem tỷ lệ sử dụng của từng xe), đăng ký lịch bảo trì/ngừng sử dụng, xem lịch sử sử dụng và nhật ký kiểm toán. Kết quả tự động phát hiện trả xe trễ/chưa xuất phát cũng sẽ được gửi tới kênh Slack/Teams đã cài đặt. Ngoài ra, các lịch đặt xe cũ còn ở trạng thái \"Trả xe trễ\"/\"Chưa xuất phát\" có thể được quản trị viên ẩn riêng khỏi danh sách trên trang chủ (dữ liệu vẫn được giữ nguyên, không bị xóa).",
             highlight: false,
           },
         ],
