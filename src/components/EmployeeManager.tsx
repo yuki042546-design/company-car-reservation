@@ -89,18 +89,17 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
     }
   }
 
-  async function toggleActive(employee: Employee) {
+  async function deleteEmployee(employee: Employee) {
     setError(null);
+    if (!window.confirm(dict.employees.deleteConfirm(employee.name))) {
+      return;
+    }
     setBusyId(employee.id);
     try {
-      const res = await fetch(`/api/employees/${employee.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !employee.isActive }),
-      });
+      const res = await fetch(`/api/employees/${employee.id}`, { method: "DELETE" });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.errors?.[0] ?? dict.employees.genericError);
+        setError(json.errors?.[0] ?? dict.employees.deleteError);
         return;
       }
       router.refresh();
@@ -222,15 +221,11 @@ export function EmployeeManager({ employees }: EmployeeManagerProps) {
                     {dict.common.edit}
                   </button>
                   <button
-                    onClick={() => toggleActive(emp)}
+                    onClick={() => deleteEmployee(emp)}
                     disabled={busyId === emp.id}
-                    className={
-                      emp.isActive
-                        ? "rounded-lg border border-gray-300 px-3 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-                        : "rounded-lg border border-brand-100 bg-brand-50 px-3 py-1 text-xs text-brand-600 hover:bg-brand-100 disabled:opacity-50"
-                    }
+                    className="rounded-lg border border-danger-border px-3 py-1 text-xs text-danger hover:bg-danger-soft disabled:opacity-50"
                   >
-                    {emp.isActive ? dict.employees.deactivate : dict.employees.activate}
+                    {dict.employees.delete}
                   </button>
                 </div>
               </div>

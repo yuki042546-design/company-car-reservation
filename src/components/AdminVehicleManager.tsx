@@ -213,7 +213,7 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
                   : "shrink-0 rounded-lg border border-brand-100 bg-brand-50 px-3 py-1 text-xs text-brand-600 hover:bg-brand-100 disabled:opacity-50"
               }
             >
-              {v.active ? dict.employees.deactivate : dict.employees.activate}
+              {v.active ? dict.vehicleManager.deactivate : dict.vehicleManager.activate}
             </button>
           </li>
         ))}
