@@ -26,6 +26,8 @@ export interface Reservation {
   cancellationReason: string | null;
   cancelledAt: string | null;
   cancelledByUserId: string | null;
+  /** 管理者が個別に選んだ、トップ画面の今日/今週の一覧からの非表示フラグ。データ自体には影響しない。 */
+  hiddenFromHome: boolean;
   createdAt: string;
   updatedAt: string;
 }

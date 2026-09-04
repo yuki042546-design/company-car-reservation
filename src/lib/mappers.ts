@@ -41,6 +41,7 @@ export interface ReservationRow {
   cancellation_reason: string | null;
   cancelled_at: string | null;
   cancelled_by_user_id: string | null;
+  hidden_from_home: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -65,6 +66,7 @@ export function mapReservationRow(row: ReservationRow): Reservation {
     cancellationReason: row.cancellation_reason,
     cancelledAt: row.cancelled_at,
     cancelledByUserId: row.cancelled_by_user_id,
+    hiddenFromHome: row.hidden_from_home,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

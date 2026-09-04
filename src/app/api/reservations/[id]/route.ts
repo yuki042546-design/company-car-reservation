@@ -36,6 +36,56 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   return NextResponse.json({ reservation: mapReservationRow(data as ReservationRow) });
 }
 
+// PATCH /api/reservations/[id] - トップ画面の今日/今週の一覧からの表示・非表示切り替え（管理者のみ）
+// データ自体（ステータス・監査ログ・利用履歴・/reservationsの各タブ）には一切影響しない、
+// 表示上のフラグのみを変更する。
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const dict = getDictionary(getLocale());
+
+  if (!isAdminRequest()) {
+    return NextResponse.json({ errors: [dict.apiErrors.forbidden] }, { status: 401 });
+  }
+
+  let body: { hiddenFromHome?: boolean };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ errors: [dict.apiErrors.invalidRequestBody] }, { status: 400 });
+  }
+
+  if (typeof body.hiddenFromHome !== "boolean") {
+    return NextResponse.json({ errors: [dict.apiErrors.invalidRequestBody] }, { status: 400 });
+  }
+
+  const supabase = getSupabaseAdmin();
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .update({ hidden_from_home: body.hiddenFromHome })
+    .eq("id", params.id)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ errors: [dict.apiErrors.updateFailed] }, { status: 500 });
+  }
+  if (!data) {
+    return NextResponse.json({ errors: [dict.apiErrors.reservationNotFound] }, { status: 404 });
+  }
+
+  const updated = mapReservationRow(data as ReservationRow);
+
+  await writeAuditLog(supabase, {
+    actorUserId: null,
+    actorEmail: "admin",
+    action: body.hiddenFromHome ? "reservation_hide_from_home" : "reservation_unhide_from_home",
+    targetType: "reservation",
+    targetId: updated.id,
+  });
+
+  return NextResponse.json({ reservation: updated });
+}
+
 // PUT /api/reservations/[id] - 予約内容の変更
 // ログイン機能がないため、本人確認は使用者名の自己申告一致で行う。
 // - 予約時の使用者名（employee_name）と同じ名前で送信された場合のみ、開始前

@@ -309,6 +309,9 @@ alter table reservations add column if not exists status text not null default '
 alter table reservations add column if not exists cancellation_reason text;
 alter table reservations add column if not exists cancelled_at timestamptz;
 alter table reservations add column if not exists cancelled_by_user_id uuid references users (id);
+-- 管理者が個別に「トップ画面の今日/今週の一覧からは非表示にする」を選べるフラグ。
+-- データ自体（監査ログ・利用履歴・/reservationsの各タブ）には一切影響しない。
+alter table reservations add column if not exists hidden_from_home boolean not null default false;
 
 comment on column reservations.employee_name is '【移行前レガシー】文字列のみの使用者名。owner_user_id が null の既存予約はこの列を表示に使い、管理者が後から owner_user_id を割り当てられる。';
 comment on column reservations.vehicle_id is '対象車両。既存予約には最初の1台のIDを一括で割り当てている（下記UPDATE参照）。';

@@ -69,7 +69,8 @@ export async function getReservationsInRange(
     .select("*")
     .lt("start_time", end.toISOString())
     .gt("end_time", start.toISOString())
-    .neq("status", "cancelled");
+    .neq("status", "cancelled")
+    .eq("hidden_from_home", false);
   if (options.excludeCompleted) {
     query = query.neq("status", "completed");
   }

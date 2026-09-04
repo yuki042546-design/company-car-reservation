@@ -22,6 +22,7 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [togglingHiddenId, setTogglingHiddenId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | "all">("all");
 
@@ -67,6 +68,28 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
       setError(dict.admin.networkError);
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function toggleHiddenFromHome(r: Reservation) {
+    setError(null);
+    setTogglingHiddenId(r.id);
+    try {
+      const res = await fetch(`/api/reservations/${r.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hiddenFromHome: !r.hiddenFromHome }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.errors?.[0] ?? dict.admin.hideFromHomeGenericError);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError(dict.admin.networkError);
+    } finally {
+      setTogglingHiddenId(null);
     }
   }
 
@@ -214,13 +237,24 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
                         showEditLink
                         showDate
                         rightSlot={
-                          <button
-                            onClick={() => handleDelete(r.id)}
-                            disabled={deletingId === r.id}
-                            className="rounded-lg border border-danger-border bg-danger-soft px-3 py-1.5 text-sm text-danger hover:bg-danger-soft/70 disabled:opacity-50"
-                          >
-                            {deletingId === r.id ? dict.common.deleting : dict.common.delete}
-                          </button>
+                          <div className="flex flex-col items-end gap-2">
+                            {(r.status === "no_show" || r.status === "overdue") && (
+                              <button
+                                onClick={() => toggleHiddenFromHome(r)}
+                                disabled={togglingHiddenId === r.id}
+                                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                              >
+                                {r.hiddenFromHome ? dict.admin.unhideFromHomeButton : dict.admin.hideFromHomeButton}
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDelete(r.id)}
+                              disabled={deletingId === r.id}
+                              className="rounded-lg border border-danger-border bg-danger-soft px-3 py-1.5 text-sm text-danger hover:bg-danger-soft/70 disabled:opacity-50"
+                            >
+                              {deletingId === r.id ? dict.common.deleting : dict.common.delete}
+                            </button>
+                          </div>
                         }
                       />
                     </div>
