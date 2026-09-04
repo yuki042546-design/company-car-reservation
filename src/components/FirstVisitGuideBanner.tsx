@@ -1,27 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useI18n } from "./LocaleProvider";
 
-const DISMISSED_KEY = "onboardingBannerDismissed";
-
-// 初めてこの端末でトップ画面を開いた人向けに、最低限守ってほしいルールと
-// 「使い方」への導線を表示する。一度閉じると、この端末では以後表示しない。
-// サーバー側ではlocalStorageの状態が分からないため、初期状態は必ず非表示にし、
-// マウント後にだけ判定して表示する（SSR/CSRの不一致を避けるため）。
+// トップ画面を開くたび、最低限守ってほしいルールと「使い方」への導線を表示する。
+// 閉じるのはその場限りで、他のタブへ移動してトップに戻ってくれば再び表示される
+// （永続化はしない。閉じた状態を端末に覚えさせると、以後ずっと見えなくなるため）。
 export function FirstVisitGuideBanner() {
   const { dict } = useI18n();
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!window.localStorage.getItem(DISMISSED_KEY)) {
-      setVisible(true);
-    }
-  }, []);
+  const [visible, setVisible] = useState(true);
 
   function dismiss() {
-    window.localStorage.setItem(DISMISSED_KEY, "1");
     setVisible(false);
   }
 
