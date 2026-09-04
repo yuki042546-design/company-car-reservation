@@ -123,6 +123,42 @@ export function getMonthRangeJst(
   return { start, end, monthKey: key };
 }
 
+const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** 当月の末日の "YYYY-MM-DD"（JST）キーを返す。 */
+function lastDayOfMonthKey(monthKey: string): string {
+  const nextMonthKey = shiftMonthKey(monthKey, 1);
+  const nextMonthStart = new Date(`${nextMonthKey}-01T00:00:00+09:00`);
+  const lastDay = new Date(nextMonthStart.getTime() - 24 * 60 * 60 * 1000);
+  return jstDateKey(lastDay);
+}
+
+/**
+ * 管理画面の日付検索（from/to の searchParams）をJSTの日付範囲に変換する。
+ * 指定がない、または不正な形式の場合は当月（1日〜末日）にフォールバックする。
+ * end は排他的（指定日の翌日 00:00 JST）。
+ */
+export function resolveAdminDateRange(
+  fromParam?: string,
+  toParam?: string,
+  now: Date = new Date()
+): { start: Date; end: Date; fromKey: string; toKey: string } {
+  const { monthKey } = getMonthRangeJst(undefined, now);
+  const defaultFromKey = `${monthKey}-01`;
+  const defaultToKey = lastDayOfMonthKey(monthKey);
+  const fromKey = fromParam && DATE_KEY_PATTERN.test(fromParam) ? fromParam : defaultFromKey;
+  const toKey = toParam && DATE_KEY_PATTERN.test(toParam) ? toParam : defaultToKey;
+
+  const start = new Date(`${fromKey}T00:00:00+09:00`);
+  const end = new Date(new Date(`${toKey}T00:00:00+09:00`).getTime() + 24 * 60 * 60 * 1000);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start.getTime() >= end.getTime()) {
+    const start2 = new Date(`${defaultFromKey}T00:00:00+09:00`);
+    const end2 = new Date(new Date(`${defaultToKey}T00:00:00+09:00`).getTime() + 24 * 60 * 60 * 1000);
+    return { start: start2, end: end2, fromKey: defaultFromKey, toKey: defaultToKey };
+  }
+  return { start, end, fromKey, toKey };
+}
+
 /** "2026年7月" のような月ラベル表示。locale に応じて表記が変わる。 */
 export function formatMonthLabel(monthKey: string, locale: Locale): string {
   const [y, m] = monthKey.split("-").map(Number);

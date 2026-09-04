@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Reservation, ReservationStatus } from "@/lib/types";
 import { formatMonthLabel, getJstDateKey } from "@/lib/dateUtils";
+import { AdminDateRangeFilter } from "./AdminDateRangeFilter";
 import { useI18n } from "./LocaleProvider";
 import { ReservationCard } from "./ReservationCard";
 
@@ -11,11 +12,15 @@ interface AdminReservationListProps {
   reservations: Reservation[];
   /** 車両が複数ある場合のみ渡す（vehicleId → 車両名）。 */
   vehicleNames?: Record<string, string>;
+  /** サーバー側で絞り込み済みの日付範囲（開始日・終了日、"YYYY-MM-DD"）。 */
+  fromKey: string;
+  toKey: string;
 }
 
 const STATUS_OPTIONS: ReservationStatus[] = ["reserved", "in_use", "completed", "cancelled", "no_show", "overdue"];
+const PAGE_SIZE = 10;
 
-export function AdminReservationList({ reservations, vehicleNames }: AdminReservationListProps) {
+export function AdminReservationList({ reservations, vehicleNames, fromKey, toKey }: AdminReservationListProps) {
   const { dict, locale } = useI18n();
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -25,8 +30,9 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
   const [togglingHiddenId, setTogglingHiddenId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ReservationStatus | "all">("all");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  // 検索・絞り込みは直近N件（サーバー側でgetRecentReservationsにより上限済み）に対して
+  // 検索・絞り込みは、サーバー側で日付範囲を絞り込み済みのデータに対して
   // クライアント側で行う。利用者名・行き先・用途・予約IDのいずれかに一致すればヒットする。
   const filtered = useMemo(() => {
     return reservations.filter((r) => {
@@ -37,6 +43,9 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
       return haystack.includes(q);
     });
   }, [reservations, search, statusFilter]);
+
+  // 一度に表示するのは先頭 PAGE_SIZE 件まで（「もっと表示」で追加表示）。
+  const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
 
   async function handleDelete(id: string) {
     if (!confirm(dict.admin.confirmDelete)) return;
@@ -107,7 +116,7 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
 
   function toggleSelectAll() {
     setSelectedIds((prev) =>
-      prev.size === filtered.length && prev.size > 0 ? new Set() : new Set(filtered.map((r) => r.id))
+      prev.size === visible.length && prev.size > 0 ? new Set() : new Set(visible.map((r) => r.id))
     );
   }
 
@@ -148,11 +157,11 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
     return <p className="text-sm text-gray-500">{dict.admin.noReservations}</p>;
   }
 
-  const allSelected = selectedIds.size > 0 && selectedIds.size === filtered.length;
+  const allSelected = selectedIds.size > 0 && selectedIds.size === visible.length;
 
-  // filtered は start_time の降順のため、月ごとにまとめても順序は保たれる。
+  // visible は start_time の降順のため、月ごとにまとめても順序は保たれる。
   const groups: { monthKey: string; items: Reservation[] }[] = [];
-  for (const r of filtered) {
+  for (const r of visible) {
     const monthKey = getJstDateKey(r.startTime).slice(0, 7);
     const group = groups[groups.length - 1];
     if (group && group.monthKey === monthKey) {
@@ -167,6 +176,8 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
       {error && (
         <p className="rounded-lg border border-danger-border bg-danger-soft p-2 text-sm text-danger">{error}</p>
       )}
+
+      <AdminDateRangeFilter fromKey={fromKey} toKey={toKey} dict={dict} />
 
       <div className="flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-white p-3">
         <input
@@ -265,7 +276,21 @@ export function AdminReservationList({ reservations, vehicleNames }: AdminReserv
           ))}
         </div>
       )}
-      <p className="pt-2 text-right text-xs text-gray-400">{dict.admin.countLabel(filtered.length)}</p>
+      {visibleCount < filtered.length && (
+        <div className="text-center">
+          <button
+            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            {dict.admin.showMoreButton}
+          </button>
+        </div>
+      )}
+      <p className="pt-2 text-right text-xs text-gray-400">
+        {visibleCount < filtered.length
+          ? dict.admin.countLabelVisible(visible.length, filtered.length)
+          : dict.admin.countLabel(filtered.length)}
+      </p>
     </div>
   );
 }

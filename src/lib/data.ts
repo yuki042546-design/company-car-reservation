@@ -47,13 +47,14 @@ export async function getAllReservations(): Promise<Reservation[]> {
  * 管理者画面向け。過去分も含め無制限に全件取得しないよう、直近の予約に絞って返す
  * （検索・絞り込みは現状クライアント側で行うため、まずは妥当な件数に制限する）。
  */
-export async function getRecentReservations(limit = 200): Promise<Reservation[]> {
+export async function getRecentReservations(
+  options: { start?: Date; end?: Date; limit?: number } = {}
+): Promise<Reservation[]> {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("reservations")
-    .select("*")
-    .order("start_time", { ascending: false })
-    .limit(limit);
+  let query = supabase.from("reservations").select("*").order("start_time", { ascending: false });
+  if (options.start) query = query.gte("start_time", options.start.toISOString());
+  if (options.end) query = query.lt("start_time", options.end.toISOString());
+  const { data, error } = await query.limit(options.limit ?? 200);
   if (error) throw error;
   return (data as ReservationRow[]).map(mapReservationRow);
 }
@@ -120,13 +121,14 @@ export async function getAllEmployees(): Promise<Employee[]> {
   return (data as EmployeeRow[]).map(mapEmployeeRow);
 }
 
-export async function getReservationLogs(limit = 200): Promise<ReservationLog[]> {
+export async function getReservationLogs(
+  options: { start?: Date; end?: Date; limit?: number } = {}
+): Promise<ReservationLog[]> {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("reservation_logs")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  let query = supabase.from("reservation_logs").select("*").order("created_at", { ascending: false });
+  if (options.start) query = query.gte("created_at", options.start.toISOString());
+  if (options.end) query = query.lt("created_at", options.end.toISOString());
+  const { data, error } = await query.limit(options.limit ?? 200);
   if (error) throw error;
   return (data as ReservationLogRow[]).map(mapReservationLogRow);
 }
@@ -278,13 +280,14 @@ export async function getVehicleUtilizationRates(days = 30): Promise<Record<stri
   return rates;
 }
 
-export async function getAuditLogs(limit = 200): Promise<AuditLog[]> {
+export async function getAuditLogs(
+  options: { start?: Date; end?: Date; limit?: number } = {}
+): Promise<AuditLog[]> {
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("audit_logs")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  let query = supabase.from("audit_logs").select("*").order("created_at", { ascending: false });
+  if (options.start) query = query.gte("created_at", options.start.toISOString());
+  if (options.end) query = query.lt("created_at", options.end.toISOString());
+  const { data, error } = await query.limit(options.limit ?? 200);
   if (error) throw error;
   return (data as AuditLogRow[]).map(mapAuditLogRow);
 }
