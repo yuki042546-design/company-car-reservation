@@ -45,7 +45,7 @@ export function Header() {
           </div>
         </div>
         <nav className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] font-semibold sm:gap-x-5 sm:text-[13px]">
-          <Link href="/" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
+          <Link href="/home" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
             {dict.nav.top}
           </Link>
           <Link href="/reservations/new" className="whitespace-nowrap text-gray-500 hover:text-brand-600">
