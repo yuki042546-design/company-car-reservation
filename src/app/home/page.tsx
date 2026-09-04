@@ -1,23 +1,14 @@
 import Link from "next/link";
-import {
-  getCurrentUsageReservation,
-  getNextReservation,
-  getOpenUsageRecordDepartureOdometer,
-  getReservationsInRange,
-  getThisWeekReservations,
-  getTodayReservations,
-} from "@/lib/data";
-import { getJstDateKey, getMonthRangeJst, getThisWeekRangeJst, getTodayRangeJst, shiftMonthKey } from "@/lib/dateUtils";
+import { Suspense } from "react";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getLocale } from "@/lib/i18n/getLocale";
-import { getActiveVehicles } from "@/lib/vehicles";
 import { FirstVisitGuideBanner } from "@/components/FirstVisitGuideBanner";
 import { MyReservationReminder } from "@/components/MyReservationReminder";
 import { SectionHeading } from "@/components/SectionHeading";
-import { TodayView } from "@/components/TodayView";
-import { TopScheduleToggle } from "@/components/TopScheduleToggle";
-import { VehicleStatusBanner } from "@/components/VehicleStatusBanner";
-import { WeekReservations } from "@/components/WeekReservations";
+import { VehicleBannersSection } from "./VehicleBannersSection";
+import { ScheduleSection } from "./ScheduleSection";
+import { TodaySection } from "./TodaySection";
+import { WeekSection } from "./WeekSection";
 
 export const dynamic = "force-dynamic";
 
@@ -35,54 +26,26 @@ const iconStrokeProps = {
   "aria-hidden": true,
 };
 
-export default async function HomePage({ searchParams }: HomePageProps) {
-  const locale = getLocale();
-  const dict = getDictionary(locale);
-  const now = new Date();
-  const { start: weekStart } = getThisWeekRangeJst();
-  const { start: todayStart } = getTodayRangeJst();
-  const { start: monthStart, end: monthEnd, monthKey } = getMonthRangeJst(searchParams.month);
+function BlockSkeleton({ className = "h-24" }: { className?: string }) {
+  return <div className={`${className} animate-pulse rounded-xl bg-gray-100`} />;
+}
 
-  // 互いに依存しないクエリはすべて同時に投げる（直列に await すると往復回数分
-  // 表示が遅くなるため）。車両ごとのバナー情報だけは、車両一覧の取得後でないと
-  // 何を取得すべきか分からないため、この後で改めて並列取得する。
-  const [today, week, monthReservations, vehicles] = await Promise.all([
-    getTodayReservations(),
-    getThisWeekReservations(),
-    getReservationsInRange(monthStart, monthEnd),
-    getActiveVehicles(),
-  ]);
-
-  const vehicleBanners = await Promise.all(
-    vehicles.map(async (vehicle) => {
-      const [currentUsage, nextReservation] = await Promise.all([
-        getCurrentUsageReservation(vehicle.id),
-        getNextReservation(vehicle.id, now),
-      ]);
-      const departureOdometer = currentUsage ? await getOpenUsageRecordDepartureOdometer(currentUsage.id) : null;
-      return { vehicle, currentUsage, nextReservation, departureOdometer };
-    })
-  );
-  // 車両が複数ある場合のみ、予約カードに車両名バッジを表示する。
-  const vehicleNames =
-    vehicles.length > 1 ? Object.fromEntries(vehicles.map((v) => [v.id, v.name])) : undefined;
+// トップ画面は表示する情報が多く、全部揃うのを待ってから一括で描画すると
+// 体感の待ち時間が長くなる。各セクションを独立した非同期コンポーネントに分け、
+// Suspense でそれぞれ包むことで、準備できたセクションから順に表示されるように
+// している（Next.js のストリーミングSSR）。ページ自体は同期関数のままにして、
+// 何もawaitせずに即座にシェル（見出し等）を返せるようにしてある。
+export default function HomePage({ searchParams }: HomePageProps) {
+  const dict = getDictionary(getLocale());
 
   return (
     <div className="space-y-8">
       <MyReservationReminder />
       <FirstVisitGuideBanner />
 
-      <div className="space-y-3">
-        {vehicleBanners.map(({ vehicle, currentUsage, nextReservation, departureOdometer }) => (
-          <VehicleStatusBanner
-            key={vehicle.id}
-            vehicle={vehicle}
-            currentUsage={currentUsage}
-            nextReservation={nextReservation}
-            departureOdometer={departureOdometer}
-          />
-        ))}
-      </div>
+      <Suspense fallback={<BlockSkeleton className="h-28" />}>
+        <VehicleBannersSection />
+      </Suspense>
 
       <section>
         <SectionHeading
@@ -96,21 +59,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </svg>
           }
         />
-        <TopScheduleToggle
-          calendar={{
-            monthKey,
-            prevMonthKey: shiftMonthKey(monthKey, -1),
-            nextMonthKey: shiftMonthKey(monthKey, 1),
-            todayKey: getJstDateKey(now.toISOString()),
-            monthReservations,
-          }}
-          gantt={{
-            todayReservations: today,
-            todayStartIso: todayStart.toISOString(),
-            nowIso: now.toISOString(),
-            vehicleNames,
-          }}
-        />
+        <Suspense fallback={<BlockSkeleton className="h-64" />}>
+          <ScheduleSection monthKeyParam={searchParams.month} />
+        </Suspense>
       </section>
 
       <section>
@@ -124,7 +75,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </svg>
           }
         />
-        <TodayView reservations={today} dict={dict} locale={locale} vehicleNames={vehicleNames} />
+        <Suspense fallback={<BlockSkeleton className="h-20" />}>
+          <TodaySection />
+        </Suspense>
       </section>
 
       <section>
@@ -142,13 +95,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </Link>
           }
         />
-        <WeekReservations
-          reservations={week}
-          weekStartIso={weekStart.toISOString()}
-          locale={locale}
-          dict={dict}
-          vehicleNames={vehicleNames}
-        />
+        <Suspense fallback={<BlockSkeleton className="h-40" />}>
+          <WeekSection />
+        </Suspense>
       </section>
     </div>
   );
