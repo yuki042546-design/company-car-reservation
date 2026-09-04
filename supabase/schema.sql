@@ -287,6 +287,11 @@ comment on column vehicles.status is 'available: 利用可能 / in_use: 使用�
 comment on column vehicles.parking_location is '駐車位置。key_location/etc_card_location/fuel_card_location とともに一般社員にも表示してよい情報（アプリ側で判定）。';
 comment on column vehicles.insurance_contact is '保険会社の連絡先。emergency_contact（緊急連絡先）とあわせて管理者限定表示を想定（アプリ側で判定）。';
 
+-- 後から追加されたカラム。私用兼用の車両など、出発・返却時に走行距離の
+-- 入力を求めない運用にしたい場合に管理者が車両ごとにオフにできる。
+alter table vehicles add column if not exists track_mileage boolean not null default true;
+comment on column vehicles.track_mileage is 'false の場合、出発・返却画面で走行距離の入力欄自体を表示しない（私用兼用車両などを想定）。';
+
 drop trigger if exists trg_vehicles_updated_at on vehicles;
 create trigger trg_vehicles_updated_at
 before update on vehicles

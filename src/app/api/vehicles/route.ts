@@ -87,6 +87,9 @@ export async function POST(request: NextRequest) {
       insert[columnNameByField[field]] = (body[field] as string).trim() || null;
     }
   }
+  if (typeof body.trackMileage === "boolean") {
+    insert.track_mileage = body.trackMileage;
+  }
 
   const dateFields = [
     "inspectionDueDate",

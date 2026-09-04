@@ -34,7 +34,7 @@ const vi: Dictionary = {
   guide: {
     pageTitle: "Hướng dẫn sử dụng",
     intro:
-      "Tổng hợp các quy tắc về đặt và sử dụng xe công ty. Đặc biệt, nút \"Bắt đầu đi\" và \"Trả xe\" bắt buộc phải nhập số km, vui lòng kiểm tra kỹ.",
+      "Tổng hợp các quy tắc về đặt và sử dụng xe công ty. Tùy xe, nút \"Bắt đầu đi\" và \"Trả xe\" có thể yêu cầu nhập số km, vui lòng kiểm tra kỹ.",
     categories: [
       {
         title: "Đặt xe và xem lịch",
@@ -65,13 +65,13 @@ const vi: Dictionary = {
         title: "Quy tắc khi bắt đầu đi và trả xe (quan trọng)",
         steps: [
           {
-            title: "⑤ Bắt đầu đi (bắt buộc nhập số km)",
-            body: "Khi đến giờ đặt xe, hãy nhấn \"Bắt đầu đi\" ở phần trạng thái xe trên trang chủ. Trước khi nhấn, bạn phải nhập số km hiển thị trên đồng hồ công-tơ-mét của xe vào ô \"Số km khi xuất phát\". Nếu chưa nhập, nút sẽ không bấm được. Đây là quy tắc để ghi lại chính xác quãng đường xe đã đi.",
+            title: "⑤ Bắt đầu đi",
+            body: "Khi đến giờ đặt xe, hãy nhấn \"Bắt đầu đi\" ở phần trạng thái xe trên trang chủ. Tùy xe, trước khi nhấn bạn có thể cần nhập số km hiển thị trên đồng hồ công-tơ-mét vào ô \"Số km khi xuất phát\" (một số xe dùng chung cho mục đích cá nhân sẽ không hiển thị ô này). Nếu ô này hiển thị mà chưa nhập, nút sẽ không bấm được.",
             highlight: true,
           },
           {
-            title: "⑥ Trả xe (bắt buộc nhập số km)",
-            body: "Khi trả xe, cũng nhập số km trên công-tơ-mét vào ô \"Số km khi trả xe\" rồi nhấn \"Trả xe\". Màn hình sẽ hiển thị lại số km lúc xuất phát để bạn đối chiếu. Nếu số km khi trả nhỏ hơn khi xuất phát, hệ thống sẽ báo lỗi (do nghi ngờ nhập sai) và không cho đăng ký — hãy kiểm tra lại và nhập lại số đúng.",
+            title: "⑥ Trả xe",
+            body: "Khi trả xe, với những xe có hiển thị ô nhập số km, cũng nhập số km trên công-tơ-mét vào ô \"Số km khi trả xe\" rồi nhấn \"Trả xe\". Màn hình sẽ hiển thị lại số km lúc xuất phát để bạn đối chiếu. Nếu số km khi trả nhỏ hơn khi xuất phát, hệ thống sẽ báo lỗi (do nghi ngờ nhập sai) và không cho đăng ký — hãy kiểm tra lại và nhập lại số đúng.",
             highlight: true,
           },
           {
@@ -129,7 +129,7 @@ const vi: Dictionary = {
   },
   onboarding: {
     title: "Dành cho người mới sử dụng lần đầu",
-    point1: "Khi bắt đầu đi và khi trả xe, bắt buộc phải nhập số km (công-tơ-mét).",
+    point1: "Tùy xe, khi bắt đầu đi và khi trả xe có thể cần nhập số km (công-tơ-mét).",
     point2: "Nếu không thấy tên của bạn trong danh sách người sử dụng, hãy nhờ quản trị viên thêm vào.",
     point3: "Nếu không thao tác bắt đầu đi/trả xe trong thời gian đã đặt, trạng thái sẽ tự động chuyển thành \"trả xe trễ\" hoặc \"chưa xuất phát\".",
     guideLink: "Xem hướng dẫn sử dụng →",
@@ -418,6 +418,11 @@ const vi: Dictionary = {
     genericError: "Cập nhật thất bại.",
     networkError: "Đã xảy ra lỗi kết nối.",
     utilizationLabel: (rate: number) => `Tỷ lệ sử dụng (30 ngày qua): ${rate}%`,
+    trackMileageStatusOn: "Ghi số km: Bật",
+    trackMileageStatusOff: "Ghi số km: Tắt",
+    trackMileageToggleToOff: "Chuyển sang không ghi số km",
+    trackMileageToggleToOn: "Chuyển lại sang ghi số km",
+    trackMileageCheckboxLabel: "Bắt buộc nhập số km khi bắt đầu đi / trả xe",
   },
   userManager: {
     roleLabels: {

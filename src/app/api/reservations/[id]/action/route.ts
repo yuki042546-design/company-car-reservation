@@ -15,10 +15,10 @@ interface RouteParams {
 }
 
 type ActionBody =
-  | { action: "depart"; departureOdometer: number; fuelLevelAtDeparture?: number; issueDescription?: string }
+  | { action: "depart"; departureOdometer?: number; fuelLevelAtDeparture?: number; issueDescription?: string }
   | {
       action: "return";
-      returnOdometer: number;
+      returnOdometer?: number;
       fuelLevelAtReturn?: number;
       refueled?: boolean;
       issueReported?: boolean;
@@ -60,9 +60,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
   const existing = mapReservationRow(existingRow as ReservationRow);
 
+  const { data: vehicleRow } = await supabase
+    .from("vehicles")
+    .select("track_mileage")
+    .eq("id", existing.vehicleId)
+    .maybeSingle();
+  const trackMileage = vehicleRow?.track_mileage ?? true;
+
   if (body.action === "depart") {
-    if (typeof body.departureOdometer !== "number" || !Number.isFinite(body.departureOdometer) || body.departureOdometer < 0) {
-      return NextResponse.json({ errors: [dict.validation.departureOdometerRequired] }, { status: 400 });
+    if (trackMileage) {
+      if (
+        typeof body.departureOdometer !== "number" ||
+        !Number.isFinite(body.departureOdometer) ||
+        body.departureOdometer < 0
+      ) {
+        return NextResponse.json({ errors: [dict.validation.departureOdometerRequired] }, { status: 400 });
+      }
     }
 
     if (!canTransitionReservation(existing.status, "in_use")) {
@@ -86,7 +99,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       vehicle_id: existing.vehicleId,
       user_id: null,
       checked_out_at: new Date().toISOString(),
-      departure_odometer: body.departureOdometer,
+      departure_odometer: trackMileage ? body.departureOdometer : null,
       fuel_level_at_departure: body.fuelLevelAtDeparture ?? null,
       issue_reported: !!body.issueDescription,
       issue_description: body.issueDescription ?? null,
@@ -108,27 +121,31 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   if (body.action === "return") {
-    if (typeof body.returnOdometer !== "number" || !Number.isFinite(body.returnOdometer) || body.returnOdometer < 0) {
-      return NextResponse.json({ errors: [dict.validation.returnOdometerRequired] }, { status: 400 });
+    if (trackMileage) {
+      if (typeof body.returnOdometer !== "number" || !Number.isFinite(body.returnOdometer) || body.returnOdometer < 0) {
+        return NextResponse.json({ errors: [dict.validation.returnOdometerRequired] }, { status: 400 });
+      }
     }
 
     if (existing.status !== "in_use" && existing.status !== "overdue") {
       return NextResponse.json({ errors: [dict.action.invalidTransition] }, { status: 409 });
     }
 
-    const { data: usageRecord } = await supabase
-      .from("vehicle_usage_records")
-      .select("departure_odometer")
-      .eq("reservation_id", existing.id)
-      .is("returned_at", null)
-      .maybeSingle();
+    if (trackMileage) {
+      const { data: usageRecord } = await supabase
+        .from("vehicle_usage_records")
+        .select("departure_odometer")
+        .eq("reservation_id", existing.id)
+        .is("returned_at", null)
+        .maybeSingle();
 
-    if (
-      usageRecord?.departure_odometer !== null &&
-      usageRecord?.departure_odometer !== undefined &&
-      body.returnOdometer < usageRecord.departure_odometer
-    ) {
-      return NextResponse.json({ errors: [dict.validation.returnOdometerTooLow] }, { status: 400 });
+      if (
+        usageRecord?.departure_odometer !== null &&
+        usageRecord?.departure_odometer !== undefined &&
+        body.returnOdometer! < usageRecord.departure_odometer
+      ) {
+        return NextResponse.json({ errors: [dict.validation.returnOdometerTooLow] }, { status: 400 });
+      }
     }
 
     const { data: updatedRow, error } = await supabase
@@ -147,7 +164,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .from("vehicle_usage_records")
       .update({
         returned_at: new Date().toISOString(),
-        return_odometer: body.returnOdometer,
+        return_odometer: trackMileage ? body.returnOdometer : null,
         fuel_level_at_return: body.fuelLevelAtReturn ?? null,
         refueled: body.refueled ?? false,
         issue_reported: body.issueReported ?? false,

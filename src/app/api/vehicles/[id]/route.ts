@@ -114,6 +114,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     update.active = body.active;
   }
 
+  if (typeof body.trackMileage === "boolean") {
+    update.track_mileage = body.trackMileage;
+  }
+
   const { data, error } = await supabase
     .from("vehicles")
     .update(update)

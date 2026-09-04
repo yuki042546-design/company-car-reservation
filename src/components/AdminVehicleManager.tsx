@@ -32,6 +32,7 @@ interface NewVehicleFields {
   nextServiceDueDate: string;
   oilChangeDueDate: string;
   tireChangeDueDate: string;
+  trackMileage: boolean;
 }
 
 const EMPTY_FIELDS: NewVehicleFields = {
@@ -52,6 +53,7 @@ const EMPTY_FIELDS: NewVehicleFields = {
   nextServiceDueDate: "",
   oilChangeDueDate: "",
   tireChangeDueDate: "",
+  trackMileage: true,
 };
 
 export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVehicleManagerProps) {
@@ -69,7 +71,7 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
     out_of_service: dict.vehicleStatus.outOfService,
   };
 
-  function updateField(key: keyof NewVehicleFields, value: string) {
+  function updateField(key: keyof Omit<NewVehicleFields, "trackMileage">, value: string) {
     setFields((f) => ({ ...f, [key]: value }));
   }
 
@@ -81,6 +83,28 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !vehicle.active }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.errors?.[0] ?? dict.vehicleManager.genericError);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError(dict.vehicleManager.networkError);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function toggleTrackMileage(vehicle: Vehicle) {
+    setError(null);
+    setBusyId(vehicle.id);
+    try {
+      const res = await fetch(`/api/vehicles/${vehicle.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trackMileage: !vehicle.trackMileage }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -153,7 +177,7 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
 
   const atLimit = vehicles.length >= MAX_VEHICLES;
 
-  const textFields: { key: keyof NewVehicleFields; label: string }[] = [
+  const textFields: { key: keyof Omit<NewVehicleFields, "trackMileage">; label: string }[] = [
     { key: "plateNumber", label: dict.vehicleInfo.plateNumberLabel },
     { key: "model", label: dict.vehicleInfo.modelLabel },
     { key: "parkingLocation", label: dict.vehicleInfo.parkingLocationLabel },
@@ -165,7 +189,7 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
     { key: "roadsideAssistanceContact", label: dict.vehicleInfo.roadsideAssistanceContactLabel },
     { key: "notes", label: dict.vehicleInfo.notesLabel },
   ];
-  const dateFields: { key: keyof NewVehicleFields; label: string }[] = [
+  const dateFields: { key: keyof Omit<NewVehicleFields, "trackMileage">; label: string }[] = [
     { key: "inspectionDueDate", label: dict.vehicleInfo.inspectionDueDateLabel },
     { key: "insuranceDueDate", label: dict.vehicleInfo.insuranceDueDateLabel },
     { key: "nextServiceDueDate", label: dict.vehicleInfo.nextServiceDueDateLabel },
@@ -189,6 +213,9 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
                 <div className="mt-0.5 text-xs text-gray-400">
                   {dict.vehicleManager.utilizationLabel(utilizationRates[v.id] ?? 0)}
                 </div>
+                <div className="mt-0.5 text-xs text-gray-400">
+                  {v.trackMileage ? dict.vehicleManager.trackMileageStatusOn : dict.vehicleManager.trackMileageStatusOff}
+                </div>
                 <select
                   value={v.vehicleType ?? ""}
                   onChange={(e) => updateVehicleType(v, e.target.value as VehicleType | "")}
@@ -204,17 +231,26 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
                 </select>
               </div>
             </div>
-            <button
-              onClick={() => toggleActive(v)}
-              disabled={busyId === v.id}
-              className={
-                v.active
-                  ? "shrink-0 rounded-lg border border-gray-300 px-3 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-                  : "shrink-0 rounded-lg border border-brand-100 bg-brand-50 px-3 py-1 text-xs text-brand-600 hover:bg-brand-100 disabled:opacity-50"
-              }
-            >
-              {v.active ? dict.vehicleManager.deactivate : dict.vehicleManager.activate}
-            </button>
+            <div className="flex shrink-0 flex-col items-end gap-1.5">
+              <button
+                onClick={() => toggleActive(v)}
+                disabled={busyId === v.id}
+                className={
+                  v.active
+                    ? "rounded-lg border border-gray-300 px-3 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                    : "rounded-lg border border-brand-100 bg-brand-50 px-3 py-1 text-xs text-brand-600 hover:bg-brand-100 disabled:opacity-50"
+                }
+              >
+                {v.active ? dict.vehicleManager.deactivate : dict.vehicleManager.activate}
+              </button>
+              <button
+                onClick={() => toggleTrackMileage(v)}
+                disabled={busyId === v.id}
+                className="rounded-lg border border-gray-300 px-3 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {v.trackMileage ? dict.vehicleManager.trackMileageToggleToOff : dict.vehicleManager.trackMileageToggleToOn}
+              </button>
+            </div>
           </li>
         ))}
       </ul>
@@ -243,6 +279,15 @@ export function AdminVehicleManager({ vehicles, utilizationRates = {} }: AdminVe
               </option>
             ))}
           </select>
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <input
+              type="checkbox"
+              checked={fields.trackMileage}
+              onChange={(e) => setFields((f) => ({ ...f, trackMileage: e.target.checked }))}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            {dict.vehicleManager.trackMileageCheckboxLabel}
+          </label>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {textFields.map((f) => (
               <input

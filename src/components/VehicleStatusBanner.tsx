@@ -36,21 +36,26 @@ export function VehicleStatusBanner({
   const [departureOdometer, setDepartureOdometer] = useState("");
   const [returnOdometer, setReturnOdometer] = useState("");
 
+  const trackMileage = vehicle.trackMileage;
+
   const parsedDepartureInput = Number(departureOdometer);
-  const isDepartureInputValid =
-    departureOdometer.trim() !== "" && Number.isFinite(parsedDepartureInput) && parsedDepartureInput >= 0;
+  const isDepartureInputValid = !trackMileage
+    ? true
+    : departureOdometer.trim() !== "" && Number.isFinite(parsedDepartureInput) && parsedDepartureInput >= 0;
 
   const parsedReturnInput = Number(returnOdometer);
   const isReturnBelowDeparture =
+    trackMileage &&
     recordedDepartureOdometer != null &&
     returnOdometer.trim() !== "" &&
     Number.isFinite(parsedReturnInput) &&
     parsedReturnInput < recordedDepartureOdometer;
-  const isReturnInputValid =
-    returnOdometer.trim() !== "" &&
-    Number.isFinite(parsedReturnInput) &&
-    parsedReturnInput >= 0 &&
-    !isReturnBelowDeparture;
+  const isReturnInputValid = !trackMileage
+    ? true
+    : returnOdometer.trim() !== "" &&
+      Number.isFinite(parsedReturnInput) &&
+      parsedReturnInput >= 0 &&
+      !isReturnBelowDeparture;
 
   const statusLabel =
     vehicle.status === "available"
@@ -90,7 +95,7 @@ export function VehicleStatusBanner({
 
   async function handleReturn() {
     if (!isReturnInputValid) return;
-    await callAction("return", { returnOdometer: parsedReturnInput });
+    await callAction("return", trackMileage ? { returnOdometer: parsedReturnInput } : {});
   }
 
   async function handleExtend() {
@@ -109,7 +114,7 @@ export function VehicleStatusBanner({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "depart",
-          departureOdometer: parsedDepartureInput,
+          ...(trackMileage ? { departureOdometer: parsedDepartureInput } : {}),
         }),
       });
       const json = await res.json();
@@ -152,25 +157,27 @@ export function VehicleStatusBanner({
           </p>
           {canOperate && (
             <div className="mt-3 space-y-2">
-              {recordedDepartureOdometer != null && (
+              {trackMileage && recordedDepartureOdometer != null && (
                 <p className="text-xs text-gray-500">
                   {dict.action.departureOdometerReferenceLabel(recordedDepartureOdometer)}
                 </p>
               )}
-              <label className="flex items-center gap-2 text-xs text-gray-500">
-                {dict.action.returnOdometerLabel}
-                <span className="text-red-500">*</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  step={10}
-                  required
-                  value={returnOdometer}
-                  onChange={(e) => setReturnOdometer(e.target.value)}
-                  className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900"
-                />
-              </label>
+              {trackMileage && (
+                <label className="flex items-center gap-2 text-xs text-gray-500">
+                  {dict.action.returnOdometerLabel}
+                  <span className="text-red-500">*</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    step={10}
+                    required
+                    value={returnOdometer}
+                    onChange={(e) => setReturnOdometer(e.target.value)}
+                    className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900"
+                  />
+                </label>
+              )}
               {isReturnBelowDeparture && (
                 <p className="text-xs text-danger">{dict.validation.returnOdometerTooLow}</p>
               )}
@@ -203,20 +210,22 @@ export function VehicleStatusBanner({
               </p>
               {canDepartNext && (
                 <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-2 text-xs text-gray-500">
-                    {dict.action.departureOdometerLabel}
-                    <span className="text-red-500">*</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      step={10}
-                      required
-                      value={departureOdometer}
-                      onChange={(e) => setDepartureOdometer(e.target.value)}
-                      className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900"
-                    />
-                  </label>
+                  {trackMileage && (
+                    <label className="flex items-center gap-2 text-xs text-gray-500">
+                      {dict.action.departureOdometerLabel}
+                      <span className="text-red-500">*</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        step={10}
+                        required
+                        value={departureOdometer}
+                        onChange={(e) => setDepartureOdometer(e.target.value)}
+                        className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900"
+                      />
+                    </label>
+                  )}
                   <button
                     onClick={handleDepart}
                     disabled={busy || !isDepartureInputValid}

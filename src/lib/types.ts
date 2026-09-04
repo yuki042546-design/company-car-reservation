@@ -63,6 +63,7 @@ export interface Vehicle {
   notes: string | null;
   status: VehicleStatus;
   active: boolean;
+  trackMileage: boolean;
   inspectionDueDate: string | null;
   insuranceDueDate: string | null;
   nextServiceDueDate: string | null;

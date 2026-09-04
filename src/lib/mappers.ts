@@ -136,6 +136,7 @@ export interface VehicleRow {
   status: VehicleStatus;
   vehicle_type: VehicleType | null;
   active: boolean;
+  track_mileage: boolean;
   inspection_due_date: string | null;
   insurance_due_date: string | null;
   next_service_due_date: string | null;
@@ -162,6 +163,7 @@ export function mapVehicleRow(row: VehicleRow): Vehicle {
     notes: row.notes,
     status: row.status,
     active: row.active,
+    trackMileage: row.track_mileage,
     inspectionDueDate: row.inspection_due_date,
     insuranceDueDate: row.insurance_due_date,
     nextServiceDueDate: row.next_service_due_date,
